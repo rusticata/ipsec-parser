@@ -32,7 +32,17 @@ pub enum IkeNextPayloadType {
     IdentInitiator = 35,
     IdentResponder = 36,
     Certificate = 37,
-    // XXX ...
+    CertificateRequest = 38,
+    Authentication = 39,
+    Nonce = 40,
+    Notify = 41,
+    Delete = 42,
+    VendorID = 43,
+    TrafficSelectorInitiator = 44,
+    TrafficSelectorResponder = 45,
+    EncryptedAndAuthenticated = 46,
+    Configuration = 47,
+    ExtensibleAuthentication = 48,
 }
 
 /// Defined in [RFC5996]
@@ -76,11 +86,36 @@ pub struct KeyExchangePayload<'a> {
     kex_data: &'a[u8],
 }
 
-/// Defined in [RFC5996]
+/// Defined in [RFC5996] section 3.5
+#[derive(Debug,PartialEq)]
+pub struct IdentificationPayload<'a> {
+    id_type: u8,
+    reserved1: u8,
+    reserved2: u16,
+    ident_data: &'a[u8],
+}
+
+// XXX Certificate
+
+// XXX CertificateRequest
+
+// XXX Authentication
+
+/// Defined in [RFC5996] section 3.9
+#[derive(Debug,PartialEq)]
+pub struct NoncePayload<'a> {
+    nonce_data: &'a[u8],
+}
+
+/// Defined in [RFC5996] section 3.2
 #[derive(Debug,PartialEq)]
 pub enum IkeV2PayloadContent<'a> {
     SA(Vec<IkeV2Proposal<'a>>),
     KE(KeyExchangePayload<'a>),
+    IDi(IdentificationPayload<'a>),
+    IDr(IdentificationPayload<'a>),
+
+    Nonce(NoncePayload<'a>),
 
     Unknown(&'a[u8]),
 
@@ -228,6 +263,60 @@ pub fn parse_ikev2_payload_kex<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],I
         })
 }
 
+pub fn parse_ikev2_payload_ident_init<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
+    chain!(i,
+        id_type: be_u8 ~
+        reserved1: be_u8 ~
+        reserved2: be_u16 ~
+        data: take!(length-4),
+        || {
+            IkeV2PayloadContent::IDi(
+                IdentificationPayload{
+                    id_type: id_type,
+                    reserved1: reserved1,
+                    reserved2: reserved2,
+                    ident_data: data,
+                }
+            )
+        })
+}
+
+pub fn parse_ikev2_payload_ident_resp<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
+    chain!(i,
+        id_type: be_u8 ~
+        reserved1: be_u8 ~
+        reserved2: be_u16 ~
+        data: take!(length-4),
+        || {
+            IkeV2PayloadContent::IDr(
+                IdentificationPayload{
+                    id_type: id_type,
+                    reserved1: reserved1,
+                    reserved2: reserved2,
+                    ident_data: data,
+                }
+            )
+        })
+}
+
+// XXX Certificate
+
+// XXX CertificateRequest
+
+// XXX Authentication
+
+pub fn parse_ikev2_payload_nonce<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
+    chain!(i,
+        data: take!(length),
+        || {
+            IkeV2PayloadContent::Nonce(
+                NoncePayload{
+                    nonce_data: data,
+                }
+            )
+        })
+}
+
 pub fn parse_ikev2_payload_unknown<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
     map!(i, take!(length), |d| { IkeV2PayloadContent::Unknown(d) })
 }
@@ -236,6 +325,9 @@ pub fn parse_ikev2_payload_with_type<'a>(i: &'a[u8], length: u16, next_payload_t
     let f = match next_payload_type {
         33 => parse_ikev2_payload_sa,
         34 => parse_ikev2_payload_kex,
+        35 => parse_ikev2_payload_ident_init,
+        36 => parse_ikev2_payload_ident_resp,
+        40 => parse_ikev2_payload_nonce,
         _  => parse_ikev2_payload_unknown,
     };
     flat_map!(i,take!(length),call!(f,length))
