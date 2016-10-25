@@ -9,6 +9,79 @@ pub enum IkeExchangeType {
     Informational = 37,
 }
 
+/// Defined in [RFC5996] section 3.3.2
+#[derive(Debug,PartialEq)]
+#[repr(u8)]
+pub enum IkeTransformType {
+    EncryptionAlgorithm = 1,
+    PseudoRandomFunction = 2,
+    IntegrityAlgorithm = 3,
+    DiffieHellmanGroup = 4,
+    ExtendedSequenceNumbers = 5,
+}
+
+/// Defined in [RFC5996] section 3.3.2
+#[derive(Debug,PartialEq)]
+#[repr(u8)]
+pub enum IkeTransformEncType {
+    DesIV64 = 1,
+    Des = 2,
+    TripleDes = 3,
+    Rc5 = 4,
+    Idea = 5,
+    Cast = 6,
+    Blowfish = 7,
+    TripleIdea = 8,
+    DesIV32 = 9,
+    Null = 10,
+    AesCBC = 11,
+    AesCTR = 12,
+}
+
+/// Defined in [RFC5996] section 3.3.2
+#[derive(Debug,PartialEq)]
+#[repr(u8)]
+pub enum IkeTransformPRFType {
+    HmacMd5 = 1,
+    HmacSha1 = 2,
+    HmacTiger = 3,
+}
+
+/// Defined in [RFC5996] section 3.3.2
+#[derive(Debug,PartialEq)]
+#[repr(u8)]
+pub enum IkeTransformAuthType {
+    None = 0,
+    HmacMd5s96 = 1,
+    HmacSha1s96 = 2,
+    HmacDesMac = 3,
+    HmacKpdkMd5 = 4,
+    HmacAesXCBC96 = 5,
+}
+
+/// Defined in [RFC5996] section 3.3.2
+#[derive(Debug,PartialEq)]
+#[repr(u8)]
+pub enum IkeTransformDHType {
+    None = 0,
+    Modp768 = 1,
+    Modp1024 = 2,
+    Modp1536 = 5,
+    Modp2048 = 14,
+    Modp3072 = 15,
+    Modp4096 = 16,
+    Modp6144 = 17,
+    Modp8192 = 18,
+}
+
+/// Defined in [RFC5996] section 3.3.2
+#[derive(Debug,PartialEq)]
+#[repr(u8)]
+pub enum IkeTransformESNType {
+    NoESN = 0,
+    ESN = 1,
+}
+
 /// Defined in [RFC5996]
 #[derive(Debug,PartialEq)]
 pub struct IkeV2Header<'a> {
