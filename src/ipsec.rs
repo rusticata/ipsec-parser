@@ -85,15 +85,15 @@ pub enum IkeTransformESNType {
 /// Defined in [RFC5996]
 #[derive(Debug,PartialEq)]
 pub struct IkeV2Header<'a> {
-    init_spi: &'a[u8],
-    resp_spi: &'a[u8],
-    next_payload: u8,
-    maj_ver: u8,
-    min_ver: u8,
-    exch_type: u8,
-    flags: u8,
-    msg_id: u32,
-    length: u32,
+    pub init_spi: &'a[u8],
+    pub resp_spi: &'a[u8],
+    pub next_payload: u8,
+    pub maj_ver: u8,
+    pub min_ver: u8,
+    pub exch_type: u8,
+    pub flags: u8,
+    pub msg_id: u32,
+    pub length: u32,
 }
 
 #[derive(Debug,PartialEq)]
@@ -121,51 +121,51 @@ pub enum IkeNextPayloadType {
 /// Defined in [RFC5996]
 #[derive(Debug,PartialEq)]
 pub struct IkeV2GenericPayload<'a> {
-    hdr: IkeV2PayloadHeader,
-    payload: &'a[u8],
+    pub hdr: IkeV2PayloadHeader,
+    pub payload: &'a[u8],
 }
 
 /// Defined in [RFC5996]
 #[derive(Debug,PartialEq)]
 pub struct IkeV2Transform<'a> {
-    last: u8,
-    reserved1: u8,
-    transform_length: u16,
-    transform_type: u8,
-    reserved2: u8,
-    transform_id: u16,
-    attributes: Option<&'a[u8]>,
+    pub last: u8,
+    pub reserved1: u8,
+    pub transform_length: u16,
+    pub transform_type: u8,
+    pub reserved2: u8,
+    pub transform_id: u16,
+    pub attributes: Option<&'a[u8]>,
 }
 
 /// Defined in [RFC5996]
 #[derive(Debug,PartialEq)]
 pub struct IkeV2Proposal<'a> {
-    last: u8,
-    reserved: u8,
-    proposal_length: u16,
-    proposal_num: u8,
-    protocol_id: u8,
-    spi_size: u8,
-    num_transforms: u8,
-    spi: Option<&'a[u8]>,
-    transforms: Vec<IkeV2Transform<'a>>,
+    pub last: u8,
+    pub reserved: u8,
+    pub proposal_length: u16,
+    pub proposal_num: u8,
+    pub protocol_id: u8,
+    pub spi_size: u8,
+    pub num_transforms: u8,
+    pub spi: Option<&'a[u8]>,
+    pub transforms: Vec<IkeV2Transform<'a>>,
 }
 
 /// Defined in [RFC5996]
 #[derive(Debug,PartialEq)]
 pub struct KeyExchangePayload<'a> {
-    dh_group: u16,
-    reserved: u16,
-    kex_data: &'a[u8],
+    pub dh_group: u16,
+    pub reserved: u16,
+    pub kex_data: &'a[u8],
 }
 
 /// Defined in [RFC5996] section 3.5
 #[derive(Debug,PartialEq)]
 pub struct IdentificationPayload<'a> {
-    id_type: u8,
-    reserved1: u8,
-    reserved2: u16,
-    ident_data: &'a[u8],
+    pub id_type: u8,
+    pub reserved1: u8,
+    pub reserved2: u16,
+    pub ident_data: &'a[u8],
 }
 
 // XXX Certificate
@@ -177,7 +177,7 @@ pub struct IdentificationPayload<'a> {
 /// Defined in [RFC5996] section 3.9
 #[derive(Debug,PartialEq)]
 pub struct NoncePayload<'a> {
-    nonce_data: &'a[u8],
+    pub nonce_data: &'a[u8],
 }
 
 /// Defined in [RFC5996] section 3.2
@@ -198,17 +198,17 @@ pub enum IkeV2PayloadContent<'a> {
 /// Defined in [RFC5996]
 #[derive(Clone,Debug,PartialEq)]
 pub struct IkeV2PayloadHeader {
-    next_payload_type: u8,
-    critical: bool,
-    reserved: u8,
-    payload_length: u16,
+    pub next_payload_type: u8,
+    pub critical: bool,
+    pub reserved: u8,
+    pub payload_length: u16,
 }
 
 /// Defined in [RFC5996]
 #[derive(Debug,PartialEq)]
 pub struct IkeV2Payload<'a> {
-    hdr: IkeV2PayloadHeader,
-    content: IkeV2PayloadContent<'a>,
+    pub hdr: IkeV2PayloadHeader,
+    pub content: IkeV2PayloadContent<'a>,
 }
 
 
@@ -406,7 +406,7 @@ pub fn parse_ikev2_payload_with_type<'a>(i: &'a[u8], length: u16, next_payload_t
     flat_map!(i,take!(length),call!(f,length))
 }
 
-fn parse_payload_list_fold<'a>(mut v: Vec<IkeV2Payload<'a>>, p: IkeV2GenericPayload<'a>) -> Vec<IkeV2Payload<'a>> {
+fn parse_ikev2_payload_list_fold<'a>(mut v: Vec<IkeV2Payload<'a>>, p: IkeV2GenericPayload<'a>) -> Vec<IkeV2Payload<'a>> {
     // println!("parse_payload_list_fold: v.len={} p={:?}",v.len(),p);
     let next_payload_type = match v.last() {
         Some(el) => el.hdr.next_payload_type,
@@ -432,7 +432,7 @@ fn parse_payload_list_fold<'a>(mut v: Vec<IkeV2Payload<'a>>, p: IkeV2GenericPayl
     v
 }
 
-pub fn parse_payload_list<'a>(i: &'a[u8], initial_type: u8) -> IResult<&'a[u8],Vec<IkeV2Payload<'a>>> {
+pub fn parse_ikev2_payload_list<'a>(i: &'a[u8], initial_type: u8) -> IResult<&'a[u8],Vec<IkeV2Payload<'a>>> {
     fold_many1!(i,
         parse_ikev2_payload_generic,
         vec![
@@ -441,7 +441,7 @@ pub fn parse_payload_list<'a>(i: &'a[u8], initial_type: u8) -> IResult<&'a[u8],V
                 content:IkeV2PayloadContent::Dummy,
             },
         ],
-        parse_payload_list_fold
+        parse_ikev2_payload_list_fold
     )
     // XXX should we split_first() the vector and return all but the first element ?
 }
@@ -596,7 +596,7 @@ fn test_ikev2_payload_sa() {
 fn test_ikev2_parse_payload_many() {
     // let empty = &b""[..];
     let bytes = &IKEV2_INIT_REQ[28..];
-    let res = parse_payload_list(&bytes,33);
+    let res = parse_ikev2_payload_list(&bytes,33);
     println!("{:?}",res);
 }
 
