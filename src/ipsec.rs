@@ -1,5 +1,6 @@
 use nom::*;
 
+enum_from_primitive! {
 #[derive(Debug,PartialEq)]
 #[repr(u8)]
 pub enum IkeExchangeType {
@@ -8,7 +9,9 @@ pub enum IkeExchangeType {
     CreateChildSA = 36,
     Informational = 37,
 }
+}
 
+enum_from_primitive! {
 /// Defined in [RFC5996] section 3.3.2
 #[derive(Debug,PartialEq)]
 #[repr(u8)]
@@ -19,7 +22,9 @@ pub enum IkeTransformType {
     DiffieHellmanGroup = 4,
     ExtendedSequenceNumbers = 5,
 }
+}
 
+enum_from_primitive! {
 /// Defined in [RFC5996] section 3.3.2
 #[derive(Debug,PartialEq)]
 #[repr(u8)]
@@ -37,7 +42,9 @@ pub enum IkeTransformEncType {
     AesCBC = 11,
     AesCTR = 12,
 }
+}
 
+enum_from_primitive! {
 /// Defined in [RFC5996] section 3.3.2
 #[derive(Debug,PartialEq)]
 #[repr(u8)]
@@ -46,7 +53,9 @@ pub enum IkeTransformPRFType {
     HmacSha1 = 2,
     HmacTiger = 3,
 }
+}
 
+enum_from_primitive! {
 /// Defined in [RFC5996] section 3.3.2
 #[derive(Debug,PartialEq)]
 #[repr(u8)]
@@ -58,7 +67,9 @@ pub enum IkeTransformAuthType {
     HmacKpdkMd5 = 4,
     HmacAesXCBC96 = 5,
 }
+}
 
+enum_from_primitive! {
 /// Defined in [RFC5996] section 3.3.2
 #[derive(Debug,PartialEq)]
 #[repr(u8)]
@@ -73,13 +84,16 @@ pub enum IkeTransformDHType {
     Modp6144 = 17,
     Modp8192 = 18,
 }
+}
 
+enum_from_primitive! {
 /// Defined in [RFC5996] section 3.3.2
 #[derive(Debug,PartialEq)]
 #[repr(u8)]
 pub enum IkeTransformESNType {
     NoESN = 0,
     ESN = 1,
+}
 }
 
 /// Defined in [RFC5996]
