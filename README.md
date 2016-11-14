@@ -4,7 +4,9 @@
 
 ## Overview
 
-ipsec-parser is a parser for the IPsec(IKEv2 for now) protocol.
+ipsec-parser is a parser for the IPsec protocol.
+
+For the moment, only a subset of IKEv2 is supported.
 
 ## License
 
