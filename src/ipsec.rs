@@ -96,6 +96,27 @@ pub enum IkeTransformESNType {
 }
 }
 
+enum_from_primitive! {
+/// Defined in [RFC5996] section 3.6
+#[derive(Debug,PartialEq)]
+#[repr(u8)]
+pub enum IkeCertificateEncodingType {
+    Pkcs7 = 1,
+    Pgp = 2,
+    Dns = 3,
+    X509Sig = 4,
+    // 5 is unused
+    Kerberos = 6,
+    Crl = 7,
+    Arl = 8,
+    SpkiCert = 9,
+    X509Attr = 10,
+    RawRsa = 11,
+    HashUrlX509Cert = 12,
+    HashUrlX509Bundle = 13,
+}
+}
+
 /// Defined in [RFC5996]
 #[derive(Debug,PartialEq)]
 pub struct IkeV2Header<'a> {
@@ -182,9 +203,19 @@ pub struct IdentificationPayload<'a> {
     pub ident_data: &'a[u8],
 }
 
-// XXX Certificate
+/// Defined in [RFC5996] section 3.7
+#[derive(Debug,PartialEq)]
+pub struct CertificatePayload<'a> {
+    pub cert_encoding: u8,
+    pub cert_data: &'a[u8],
+}
 
-// XXX CertificateRequest
+/// Defined in [RFC5996] section 3.7
+#[derive(Debug,PartialEq)]
+pub struct CertificateRequestPayload<'a> {
+    pub cert_encoding: u8,
+    pub ca_data: &'a[u8],
+}
 
 // XXX Authentication
 
@@ -201,6 +232,8 @@ pub enum IkeV2PayloadContent<'a> {
     KE(KeyExchangePayload<'a>),
     IDi(IdentificationPayload<'a>),
     IDr(IdentificationPayload<'a>),
+    Certificate(CertificatePayload<'a>),
+    CertificateRequest(CertificateRequestPayload<'a>),
 
     Nonce(NoncePayload<'a>),
 
@@ -386,9 +419,34 @@ pub fn parse_ikev2_payload_ident_resp<'a>(i: &'a[u8], length: u16) -> IResult<&'
         })
 }
 
-// XXX Certificate
+pub fn parse_ikev2_payload_certificate<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
+    chain!(i,
+        encoding: be_u8 ~
+        data: take!(length-1),
+        || {
+            IkeV2PayloadContent::Certificate(
+                CertificatePayload{
+                    cert_encoding: encoding,
+                    cert_data: data,
+                }
+            )
+        })
+}
 
-// XXX CertificateRequest
+pub fn parse_ikev2_payload_certificate_request<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
+    chain!(i,
+        encoding: be_u8 ~
+        data: take!(length-1),
+        || {
+            IkeV2PayloadContent::CertificateRequest(
+                CertificateRequestPayload{
+                    cert_encoding: encoding,
+                    ca_data: data,
+                }
+            )
+        })
+}
+
 
 // XXX Authentication
 
@@ -414,6 +472,8 @@ pub fn parse_ikev2_payload_with_type<'a>(i: &'a[u8], length: u16, next_payload_t
         34 => parse_ikev2_payload_kex,
         35 => parse_ikev2_payload_ident_init,
         36 => parse_ikev2_payload_ident_resp,
+        37 => parse_ikev2_payload_certificate,
+        38 => parse_ikev2_payload_certificate_request,
         40 => parse_ikev2_payload_nonce,
         _  => parse_ikev2_payload_unknown,
     };
