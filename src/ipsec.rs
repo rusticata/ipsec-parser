@@ -12,7 +12,7 @@ pub enum IkeExchangeType {
 }
 
 enum_from_primitive! {
-/// Defined in [RFC5996] section 3.3.2
+/// Defined in [RFC7296] section 3.3.2
 #[derive(Debug,PartialEq)]
 #[repr(u8)]
 pub enum IkeTransformType {
@@ -25,9 +25,10 @@ pub enum IkeTransformType {
 }
 
 enum_from_primitive! {
-/// Defined in [RFC5996] section 3.3.2
+/// Defined in [RFC7296] section 3.3.2
+/// See also http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml
 #[derive(Debug,PartialEq)]
-#[repr(u8)]
+#[repr(u16)]
 pub enum IkeTransformEncType {
     DesIV64 = 1,
     Des = 2,
@@ -38,41 +39,73 @@ pub enum IkeTransformEncType {
     Blowfish = 7,
     TripleIdea = 8,
     DesIV32 = 9,
-    Null = 10,
-    AesCBC = 11,
-    AesCTR = 12,
+    // 10 is reserved
+    Null = 11,
+    AesCBC = 12,
+    AesCTR = 13,
+    AesCCM8 = 14,
+    AesCCM12 = 15,
+    AesCCM16 = 16,
+    // 17 is unassigned
+    AesGCM8 = 18,
+    AesGCM12 = 19,
+    AesGCM16 = 20,
+    NullAuthAesGCMMac = 21,
+    // 22 is reserved
+    CamelliaCBC = 23,
+    CamelliaCTR = 24,
+    CamelliaCCM8 = 25,
+    CamelliaCCM12 = 26,
+    CamelliaCCM16 = 27,
+    Chacha20Poly1305 = 28, // [RFC7634]
 }
 }
 
 enum_from_primitive! {
-/// Defined in [RFC5996] section 3.3.2
+/// Defined in [RFC7296] section 3.3.2
+/// See also http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml
 #[derive(Debug,PartialEq)]
-#[repr(u8)]
+#[repr(u16)]
 pub enum IkeTransformPRFType {
     HmacMd5 = 1,
     HmacSha1 = 2,
     HmacTiger = 3,
+    Aes128XCBC = 4,
+    HmacSha256 = 5,
+    HmacSha384 = 6,
+    HmacSha512 = 7,
+    Aes128CMAC = 8,
 }
 }
 
 enum_from_primitive! {
-/// Defined in [RFC5996] section 3.3.2
+/// Defined in [RFC7296] section 3.3.2
 #[derive(Debug,PartialEq)]
-#[repr(u8)]
+#[repr(u16)]
 pub enum IkeTransformAuthType {
     None = 0,
     HmacMd5s96 = 1,
     HmacSha1s96 = 2,
-    HmacDesMac = 3,
-    HmacKpdkMd5 = 4,
-    HmacAesXCBC96 = 5,
+    DesMac = 3,
+    KpdkMd5 = 4,
+    AesXCBC96 = 5,
+    HmacMd5s128 = 6,
+    HmacMd5s160 = 7,
+    AesCMAC96 = 8,
+    Aes128GMAC = 9,
+    Aes192GMAC = 10,
+    Aes256GMAC = 11,
+    HmacSha256s128 = 12,
+    HmacSha384s192 = 13,
+    HmacSha512s256 = 14,
 }
 }
 
 enum_from_primitive! {
-/// Defined in [RFC5996] section 3.3.2
+/// Defined in [RFC7296] section 3.3.2
+/// See also http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml
 #[derive(Debug,PartialEq)]
-#[repr(u8)]
+#[repr(u16)]
 pub enum IkeTransformDHType {
     None = 0,
     Modp768 = 1,
@@ -83,13 +116,27 @@ pub enum IkeTransformDHType {
     Modp4096 = 16,
     Modp6144 = 17,
     Modp8192 = 18,
+    Ecp256 = 19,
+    Ecp384 = 20,
+    Ecp521 = 21,
+    Modp1024s160 = 22,
+    Modp2048s224 = 23,
+    Modp2048s256 = 24,
+    Ecp192 = 25,
+    Ecp224 = 26,
+    BrainpoolP224r1 = 27,
+    BrainpoolP256r1 = 28,
+    BrainpoolP384r1 = 29,
+    BrainpoolP512r1 = 30,
+    Curve25519 = 31,
+    Curve448 = 32,
 }
 }
 
 enum_from_primitive! {
-/// Defined in [RFC5996] section 3.3.2
+/// Defined in [RFC7296] section 3.3.2
 #[derive(Debug,PartialEq)]
-#[repr(u8)]
+#[repr(u16)]
 pub enum IkeTransformESNType {
     NoESN = 0,
     ESN = 1,
@@ -97,15 +144,16 @@ pub enum IkeTransformESNType {
 }
 
 enum_from_primitive! {
-/// Defined in [RFC5996] section 3.6
+/// Defined in [RFC7296] section 3.6
+/// See also http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml
 #[derive(Debug,PartialEq)]
 #[repr(u8)]
 pub enum IkeCertificateEncodingType {
-    Pkcs7 = 1,
+    Pkcs7X509 = 1,
     Pgp = 2,
     Dns = 3,
     X509Sig = 4,
-    // 5 is unused
+    // 5 is reserved
     Kerberos = 6,
     Crl = 7,
     Arl = 8,
@@ -114,10 +162,12 @@ pub enum IkeCertificateEncodingType {
     RawRsa = 11,
     HashUrlX509Cert = 12,
     HashUrlX509Bundle = 13,
+    OCSPContent = 14,
+    RawPublicKey = 15,
 }
 }
 
-/// Defined in [RFC5996]
+/// Defined in [RFC7296]
 #[derive(Debug,PartialEq)]
 pub struct IkeV2Header<'a> {
     pub init_spi: &'a[u8],
@@ -153,14 +203,14 @@ pub enum IkeNextPayloadType {
     ExtensibleAuthentication = 48,
 }
 
-/// Defined in [RFC5996]
+/// Defined in [RFC7296]
 #[derive(Debug,PartialEq)]
 pub struct IkeV2GenericPayload<'a> {
     pub hdr: IkeV2PayloadHeader,
     pub payload: &'a[u8],
 }
 
-/// Defined in [RFC5996]
+/// Defined in [RFC7296]
 #[derive(Debug,PartialEq)]
 pub struct IkeV2Transform<'a> {
     pub last: u8,
@@ -172,7 +222,7 @@ pub struct IkeV2Transform<'a> {
     pub attributes: Option<&'a[u8]>,
 }
 
-/// Defined in [RFC5996]
+/// Defined in [RFC7296]
 #[derive(Debug,PartialEq)]
 pub struct IkeV2Proposal<'a> {
     pub last: u8,
@@ -186,7 +236,7 @@ pub struct IkeV2Proposal<'a> {
     pub transforms: Vec<IkeV2Transform<'a>>,
 }
 
-/// Defined in [RFC5996]
+/// Defined in [RFC7296]
 #[derive(Debug,PartialEq)]
 pub struct KeyExchangePayload<'a> {
     pub dh_group: u16,
@@ -194,7 +244,7 @@ pub struct KeyExchangePayload<'a> {
     pub kex_data: &'a[u8],
 }
 
-/// Defined in [RFC5996] section 3.5
+/// Defined in [RFC7296] section 3.5
 #[derive(Debug,PartialEq)]
 pub struct IdentificationPayload<'a> {
     pub id_type: u8,
@@ -203,14 +253,14 @@ pub struct IdentificationPayload<'a> {
     pub ident_data: &'a[u8],
 }
 
-/// Defined in [RFC5996] section 3.7
+/// Defined in [RFC7296] section 3.7
 #[derive(Debug,PartialEq)]
 pub struct CertificatePayload<'a> {
     pub cert_encoding: u8,
     pub cert_data: &'a[u8],
 }
 
-/// Defined in [RFC5996] section 3.7
+/// Defined in [RFC7296] section 3.7
 #[derive(Debug,PartialEq)]
 pub struct CertificateRequestPayload<'a> {
     pub cert_encoding: u8,
@@ -219,13 +269,13 @@ pub struct CertificateRequestPayload<'a> {
 
 // XXX Authentication
 
-/// Defined in [RFC5996] section 3.9
+/// Defined in [RFC7296] section 3.9
 #[derive(Debug,PartialEq)]
 pub struct NoncePayload<'a> {
     pub nonce_data: &'a[u8],
 }
 
-/// Defined in [RFC5996] section 3.2
+/// Defined in [RFC7296] section 3.2
 #[derive(Debug,PartialEq)]
 pub enum IkeV2PayloadContent<'a> {
     SA(Vec<IkeV2Proposal<'a>>),
@@ -242,7 +292,7 @@ pub enum IkeV2PayloadContent<'a> {
     Dummy,
 }
 
-/// Defined in [RFC5996]
+/// Defined in [RFC7296]
 #[derive(Clone,Debug,PartialEq)]
 pub struct IkeV2PayloadHeader {
     pub next_payload_type: u8,
@@ -251,7 +301,7 @@ pub struct IkeV2PayloadHeader {
     pub payload_length: u16,
 }
 
-/// Defined in [RFC5996]
+/// Defined in [RFC7296]
 #[derive(Debug,PartialEq)]
 pub struct IkeV2Payload<'a> {
     pub hdr: IkeV2PayloadHeader,
