@@ -211,7 +211,7 @@ pub struct IkeV2GenericPayload<'a> {
 }
 
 /// Defined in [RFC7296]
-#[derive(Debug,PartialEq)]
+#[derive(Clone,Debug,PartialEq)]
 pub struct IkeV2Transform<'a> {
     pub last: u8,
     pub reserved1: u8,
@@ -223,7 +223,7 @@ pub struct IkeV2Transform<'a> {
 }
 
 /// Defined in [RFC7296]
-#[derive(Debug,PartialEq)]
+#[derive(Clone,Debug,PartialEq)]
 pub struct IkeV2Proposal<'a> {
     pub last: u8,
     pub reserved: u8,
