@@ -587,7 +587,7 @@ pub fn parse_ikev2_payload_list<'a>(i: &'a[u8], initial_type: u8) -> IResult<&'a
 
 #[cfg(test)]
 mod tests {
-    use ipsec::*;
+    use ikev2::*;
     use nom::IResult;
 
 static IKEV2_INIT_REQ: &'static [u8] = &[
