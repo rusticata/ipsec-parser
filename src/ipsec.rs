@@ -12,6 +12,17 @@ pub enum IkeExchangeType {
 }
 
 enum_from_primitive! {
+/// Defined in [RFC7296] section 3.3.1
+#[derive(Debug,PartialEq)]
+#[repr(u8)]
+pub enum IkeProtocolID {
+    Ike = 1,
+    Ah = 2,
+    Esp = 3,
+}
+}
+
+enum_from_primitive! {
 /// Defined in [RFC7296] section 3.3.2
 #[derive(Debug,PartialEq)]
 #[repr(u8)]
@@ -166,6 +177,10 @@ pub enum IkeCertificateEncodingType {
     RawPublicKey = 15,
 }
 }
+
+pub const IKEV2_FLAG_INITIATOR : u8 = 0b1000;
+pub const IKEV2_FLAG_VERSION : u8   = 0b10000;
+pub const IKEV2_FLAG_RESPONSE : u8  = 0b100000;
 
 /// Defined in [RFC7296]
 #[derive(Debug,PartialEq)]
