@@ -325,18 +325,18 @@ pub struct IkeV2Payload<'a> {
 
 
 named!(pub parse_ikev2_header<IkeV2Header>,
-    chain!(
-        init_spi: take!(8) ~
-        resp_spi: take!(8) ~
-        np: be_u8 ~
-        vers: bits!(
-            tuple!(take_bits!(u8,4),take_bits!(u8,4))
-            ) ~
-        ex: be_u8 ~
-        flags: be_u8 ~
-        id: be_u32 ~
-        l: be_u32,
-        || {
+    do_parse!(
+           init_spi: take!(8)
+        >> resp_spi: take!(8)
+        >> np: be_u8
+        >> vers: bits!(
+             tuple!(take_bits!(u8,4),take_bits!(u8,4))
+           )
+        >> ex: be_u8
+        >> flags: be_u8
+        >> id: be_u32
+        >> l: be_u32
+        >> (
             IkeV2Header{
                 init_spi: init_spi,
                 resp_spi: resp_spi,
@@ -348,19 +348,19 @@ named!(pub parse_ikev2_header<IkeV2Header>,
                 msg_id: id,
                 length: l,
             }
-        }
+        )
     )
 );
 
 named!(pub parse_ikev2_payload_generic<IkeV2GenericPayload>,
-    chain!(
-        np_type: be_u8 ~
-        b: bits!(
+    do_parse!(
+           np_type: be_u8
+        >> b: bits!(
             tuple!(take_bits!(u8,1),take_bits!(u8,7))
-            ) ~
-        len: be_u16 ~
-        data: take!(len-4),
-        || {
+            )
+        >> len: be_u16
+        >> data: take!(len-4)
+        >> (
             IkeV2GenericPayload{
                 hdr: IkeV2PayloadHeader {
                     next_payload_type: np_type,
@@ -370,20 +370,20 @@ named!(pub parse_ikev2_payload_generic<IkeV2GenericPayload>,
                 },
                 payload: data,
             }
-        }
+        )
     )
 );
 
 named!(pub parse_ikev2_transform<IkeV2Transform>,
-    chain!(
-        last: be_u8 ~
-        reserved1: be_u8 ~
-        transform_length: be_u16 ~
-        transform_type: be_u8 ~
-        reserved2: be_u8 ~
-        transform_id: be_u16 ~
-        attributes: cond!(transform_length > 8,take!(transform_length-8)),
-        || {
+    do_parse!(
+           last: be_u8
+        >> reserved1: be_u8
+        >> transform_length: be_u16
+        >> transform_type: be_u8
+        >> reserved2: be_u8
+        >> transform_id: be_u16
+        >> attributes: cond!(transform_length > 8,take!(transform_length-8))
+        >> (
             IkeV2Transform{
                 last: last,
                 reserved1:reserved1,
@@ -393,25 +393,25 @@ named!(pub parse_ikev2_transform<IkeV2Transform>,
                 transform_id: transform_id,
                 attributes: attributes,
             }
-        }
+        )
     )
 );
 
 named!(pub parse_ikev2_proposal<IkeV2Proposal>,
-    chain!(
-        last: be_u8 ~
-        reserved: be_u8 ~
-        p_len: be_u16 ~
-        p_num: be_u8 ~
-        proto_id: be_u8 ~
-        spi_size: be_u8 ~
-        num_transforms: be_u8 ~
-        spi: cond!(spi_size > 0,take!(spi_size)) ~
-        transforms: flat_map!(
+    do_parse!(
+           last: be_u8
+        >> reserved: be_u8
+        >> p_len: be_u16
+        >> p_num: be_u8
+        >> proto_id: be_u8
+        >> spi_size: be_u8
+        >> num_transforms: be_u8
+        >> spi: cond!(spi_size > 0,take!(spi_size))
+        >> transforms: flat_map!(
             take!( p_len - (8u16+spi_size as u16) ),
             many_m_n!(num_transforms as usize,num_transforms as usize,parse_ikev2_transform)
-            ),
-        || { IkeV2Proposal{
+            )
+        >> ( IkeV2Proposal{
             last:last,
             reserved:reserved,
             proposal_length: p_len,
@@ -421,7 +421,7 @@ named!(pub parse_ikev2_proposal<IkeV2Proposal>,
             num_transforms: num_transforms,
             spi: spi,
             transforms: transforms,
-        }}
+        })
     )
 );
 
@@ -433,11 +433,11 @@ pub fn parse_ikev2_payload_sa<'a>(i: &'a[u8], _length: u16) -> IResult<&'a[u8],I
 }
 
 pub fn parse_ikev2_payload_kex<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
-    chain!(i,
-        dh: be_u16 ~
-        reserved: be_u16 ~
-        data: take!(length-4),
-        || {
+    do_parse!(i,
+           dh:       be_u16
+        >> reserved: be_u16
+        >> data:     take!(length-4)
+        >> (
             IkeV2PayloadContent::KE(
                 KeyExchangePayload{
                     dh_group: dh,
@@ -445,16 +445,17 @@ pub fn parse_ikev2_payload_kex<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],I
                     kex_data: data,
                 }
             )
-        })
+        )
+    )
 }
 
 pub fn parse_ikev2_payload_ident_init<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
-    chain!(i,
-        id_type: be_u8 ~
-        reserved1: be_u8 ~
-        reserved2: be_u16 ~
-        data: take!(length-4),
-        || {
+    do_parse!(i,
+           id_type:   be_u8
+        >> reserved1: be_u8
+        >> reserved2: be_u16
+        >> data:      take!(length-4)
+        >> (
             IkeV2PayloadContent::IDi(
                 IdentificationPayload{
                     id_type: id_type,
@@ -463,16 +464,16 @@ pub fn parse_ikev2_payload_ident_init<'a>(i: &'a[u8], length: u16) -> IResult<&'
                     ident_data: data,
                 }
             )
-        })
+        ))
 }
 
 pub fn parse_ikev2_payload_ident_resp<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
-    chain!(i,
-        id_type: be_u8 ~
-        reserved1: be_u8 ~
-        reserved2: be_u16 ~
-        data: take!(length-4),
-        || {
+    do_parse!(i,
+           id_type:   be_u8
+        >> reserved1: be_u8
+        >> reserved2: be_u16
+        >> data:      take!(length-4)
+        >> (
             IkeV2PayloadContent::IDr(
                 IdentificationPayload{
                     id_type: id_type,
@@ -481,50 +482,50 @@ pub fn parse_ikev2_payload_ident_resp<'a>(i: &'a[u8], length: u16) -> IResult<&'
                     ident_data: data,
                 }
             )
-        })
+        ))
 }
 
 pub fn parse_ikev2_payload_certificate<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
-    chain!(i,
-        encoding: be_u8 ~
-        data: take!(length-1),
-        || {
+    do_parse!(i,
+           encoding: be_u8
+        >> data: take!(length-1)
+        >> (
             IkeV2PayloadContent::Certificate(
                 CertificatePayload{
                     cert_encoding: encoding,
                     cert_data: data,
                 }
             )
-        })
+        ))
 }
 
 pub fn parse_ikev2_payload_certificate_request<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
-    chain!(i,
-        encoding: be_u8 ~
-        data: take!(length-1),
-        || {
+    do_parse!(i,
+           encoding: be_u8
+        >> data: take!(length-1)
+        >> (
             IkeV2PayloadContent::CertificateRequest(
                 CertificateRequestPayload{
                     cert_encoding: encoding,
                     ca_data: data,
                 }
             )
-        })
+        ))
 }
 
 
 // XXX Authentication
 
 pub fn parse_ikev2_payload_nonce<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
-    chain!(i,
-        data: take!(length),
-        || {
+    do_parse!(i,
+        data: take!(length)
+        >> (
             IkeV2PayloadContent::Nonce(
                 NoncePayload{
                     nonce_data: data,
                 }
             )
-        })
+        ))
 }
 
 pub fn parse_ikev2_payload_unknown<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
