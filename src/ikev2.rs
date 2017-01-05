@@ -1,3 +1,4 @@
+use enum_primitive::FromPrimitive;
 use nom::*;
 
 enum_from_primitive! {
@@ -196,6 +197,7 @@ pub struct IkeV2Header<'a> {
     pub length: u32,
 }
 
+enum_from_primitive! {
 #[derive(Debug,PartialEq)]
 #[repr(u8)]
 pub enum IkeNextPayloadType {
@@ -216,6 +218,7 @@ pub enum IkeNextPayloadType {
     EncryptedAndAuthenticated = 46,
     Configuration = 47,
     ExtensibleAuthentication = 48,
+}
 }
 
 /// Defined in [RFC7296]
@@ -290,6 +293,42 @@ pub struct NoncePayload<'a> {
     pub nonce_data: &'a[u8],
 }
 
+enum_from_primitive! {
+/// Defined in [RFC7296] section 3.13.1
+#[derive(Debug,PartialEq)]
+#[repr(u8)]
+pub enum TSType {
+    IPv4AddrRange = 7,
+    IPv6AddrRange = 8,
+}
+}
+
+/// Defined in [RFC7296] section 3.13.1
+#[derive(Debug,PartialEq)]
+pub struct TrafficSelector<'a> {
+    pub ts_type: u8,
+    pub ip_proto_id: u8,
+    pub sel_length: u16,
+    pub start_port: u16,
+    pub end_port: u16,
+    pub start_addr: &'a[u8],
+    pub end_addr: &'a[u8],
+}
+
+impl<'a> TrafficSelector<'a> {
+    pub fn get_ts_type(&self) -> Option<TSType> {
+        TSType::from_u8(self.ts_type)
+    }
+}
+
+/// Defined in [RFC7296] section 3.13
+#[derive(Debug,PartialEq)]
+pub struct TrafficSelectorPayload<'a> {
+    pub num_ts: u8,
+    pub reserved: &'a[u8], // 3 bytes
+    pub ts: Vec<TrafficSelector<'a>>,
+}
+
 /// Defined in [RFC7296] section 3.2
 #[derive(Debug,PartialEq)]
 pub enum IkeV2PayloadContent<'a> {
@@ -301,6 +340,9 @@ pub enum IkeV2PayloadContent<'a> {
     CertificateRequest(CertificateRequestPayload<'a>),
 
     Nonce(NoncePayload<'a>),
+
+    TSi(TrafficSelectorPayload<'a>),
+    TSr(TrafficSelectorPayload<'a>),
 
     Unknown(&'a[u8]),
 
@@ -314,6 +356,12 @@ pub struct IkeV2PayloadHeader {
     pub critical: bool,
     pub reserved: u8,
     pub payload_length: u16,
+}
+
+impl IkeV2PayloadHeader {
+    pub fn get_next_payload_type(&self) -> Option<IkeNextPayloadType> {
+        IkeNextPayloadType::from_u8(self.next_payload_type)
+    }
 }
 
 /// Defined in [RFC7296]
@@ -528,20 +576,96 @@ pub fn parse_ikev2_payload_nonce<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8]
         ))
 }
 
+// XXX ...
+
+fn parse_ts_addr<'a>(i: &'a[u8], t: u8) -> IResult<&'a[u8],&'a[u8]> {
+    // XXX workaround for
+    // switch!(i,value!(t),
+    //     7 => take!(4) |
+    //     8 => take!(16)
+    // )
+    // 583 |     switch!(i,value!(t),
+    //     |     ^ cannot infer type for `_`
+    switch!(i,call!(|_| {IResult::Done(i,t) as IResult<&[u8],u8,u32>}),
+        7 => take!(4) |
+        8 => take!(16)
+    )
+}
+
+fn parse_ikev2_ts<'a>(i: &'a[u8]) -> IResult<&'a[u8],TrafficSelector<'a>> {
+    do_parse!(i,
+           ts_type: be_u8
+        >> ip_proto_id: be_u8
+        >> sel_length: be_u16
+        >> start_port: be_u16
+        >> end_port: be_u16
+        >> start_addr: apply!(parse_ts_addr,ts_type)
+        >> end_addr: apply!(parse_ts_addr,ts_type)
+        >> (
+            TrafficSelector{
+                ts_type: ts_type,
+                ip_proto_id: ip_proto_id,
+                sel_length: sel_length,
+                start_port: start_port,
+                end_port: end_port,
+                start_addr: start_addr,
+                end_addr: end_addr,
+            }
+        ))
+}
+
+pub fn parse_ikev2_payload_ts<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],TrafficSelectorPayload<'a>> {
+    do_parse!(i,
+           num_ts: be_u8
+        >> reserved: take!(3)
+        >> ts: flat_map!(take!(length-4),
+            many1!(parse_ikev2_ts)
+        )
+        >> (
+            TrafficSelectorPayload{
+                num_ts: num_ts,
+                reserved: reserved,
+                ts: ts,
+            }
+        ))
+}
+
+pub fn parse_ikev2_payload_ts_init<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
+    map!(i,
+         call!(parse_ikev2_payload_ts,length),
+         |x| IkeV2PayloadContent::TSi(x)
+        )
+}
+
+pub fn parse_ikev2_payload_ts_resp<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
+    map!(i,
+         call!(parse_ikev2_payload_ts,length),
+         |x| IkeV2PayloadContent::TSr(x)
+        )
+}
+
 pub fn parse_ikev2_payload_unknown<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
     map!(i, take!(length), |d| { IkeV2PayloadContent::Unknown(d) })
 }
 
-pub fn parse_ikev2_payload_with_type<'a>(i: &'a[u8], length: u16, next_payload_type: u8) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
-    let f = match next_payload_type {
-        33 => parse_ikev2_payload_sa,
-        34 => parse_ikev2_payload_kex,
-        35 => parse_ikev2_payload_ident_init,
-        36 => parse_ikev2_payload_ident_resp,
-        37 => parse_ikev2_payload_certificate,
-        38 => parse_ikev2_payload_certificate_request,
-        40 => parse_ikev2_payload_nonce,
-        _  => parse_ikev2_payload_unknown,
+pub fn parse_ikev2_payload_with_type(i: &[u8], length: u16, next_payload_type: u8) -> IResult<&[u8],IkeV2PayloadContent> {
+    let f = match IkeNextPayloadType::from_u8(next_payload_type) {
+        // Some(IkeNextPayloadType::NoNextPayload)       => parse_ikev2_payload_unknown, // XXX ?
+        Some(IkeNextPayloadType::SecurityAssociation)      => parse_ikev2_payload_sa,
+        Some(IkeNextPayloadType::KeyExchange)              => parse_ikev2_payload_kex,
+        Some(IkeNextPayloadType::IdentInitiator)           => parse_ikev2_payload_ident_init,
+        Some(IkeNextPayloadType::IdentResponder)           => parse_ikev2_payload_ident_resp,
+        Some(IkeNextPayloadType::Certificate)              => parse_ikev2_payload_certificate,
+        Some(IkeNextPayloadType::CertificateRequest)       => parse_ikev2_payload_certificate_request,
+        // Some(IkeNextPayloadType::Authentication)           => parse_ikev2_payload_unknown,
+        // Authentication
+        Some(IkeNextPayloadType::Nonce)                    => parse_ikev2_payload_nonce,
+        // ...
+        Some(IkeNextPayloadType::TrafficSelectorInitiator) => parse_ikev2_payload_ts_init,
+        Some(IkeNextPayloadType::TrafficSelectorResponder) => parse_ikev2_payload_ts_resp,
+        // None                                               => parse_ikev2_payload_unknown,
+        _ => parse_ikev2_payload_unknown,
+        // _ => panic!("unknown type {}",next_payload_type),
     };
     flat_map!(i,take!(length),call!(f,length))
 }
