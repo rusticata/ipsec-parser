@@ -1,3 +1,4 @@
+use std::net::{IpAddr,Ipv4Addr,Ipv6Addr};
 use enum_primitive::FromPrimitive;
 use nom::*;
 
@@ -315,9 +316,42 @@ pub struct TrafficSelector<'a> {
     pub end_addr: &'a[u8],
 }
 
+fn ipv4_from_slice(b:&[u8]) -> Ipv4Addr {
+    Ipv4Addr::new(b[0], b[1], b[2], b[3])
+}
+
+fn ipv6_from_slice(b:&[u8]) -> Ipv6Addr {
+    Ipv6Addr::new(
+        (b[0] as u16) << 8 | (b[1] as u16),
+        (b[2] as u16) << 8 | (b[3] as u16),
+        (b[4] as u16) << 8 | (b[5] as u16),
+        (b[6] as u16) << 8 | (b[7] as u16),
+        (b[8] as u16) << 8 | (b[9] as u16),
+        (b[10] as u16) << 8 | (b[11] as u16),
+        (b[12] as u16) << 8 | (b[13] as u16),
+        (b[14] as u16) << 8 | (b[15] as u16),
+    )
+}
+
 impl<'a> TrafficSelector<'a> {
     pub fn get_ts_type(&self) -> Option<TSType> {
         TSType::from_u8(self.ts_type)
+    }
+
+    pub fn get_start_addr(&self) -> Option<IpAddr> {
+        match self.ts_type {
+            7 => Some(IpAddr::V4(ipv4_from_slice(self.start_addr))),
+            8 => Some(IpAddr::V6(ipv6_from_slice(self.start_addr))),
+            _ => None,
+        }
+    }
+
+    pub fn get_end_addr(&self) -> Option<IpAddr> {
+        match self.ts_type {
+            7 => Some(IpAddr::V4(ipv4_from_slice(self.end_addr))),
+            8 => Some(IpAddr::V6(ipv6_from_slice(self.end_addr))),
+            _ => None,
+        }
     }
 }
 
