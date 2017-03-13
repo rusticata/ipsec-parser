@@ -616,7 +616,7 @@ fn parse_ts_addr<'a>(i: &'a[u8], t: u8) -> IResult<&'a[u8],&'a[u8]> {
     match t {
         7 => take!(i, 4),
         8 => take!(i, 16),
-        _ => IResult::Error(ErrorKind::Switch),
+        _ => IResult::Error(error_code!(ErrorKind::Switch)),
     }
 }
 
