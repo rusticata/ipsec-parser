@@ -613,17 +613,11 @@ pub fn parse_ikev2_payload_nonce<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8]
 // XXX ...
 
 fn parse_ts_addr<'a>(i: &'a[u8], t: u8) -> IResult<&'a[u8],&'a[u8]> {
-    // XXX workaround for
-    // switch!(i,value!(t),
-    //     7 => take!(4) |
-    //     8 => take!(16)
-    // )
-    // 583 |     switch!(i,value!(t),
-    //     |     ^ cannot infer type for `_`
-    switch!(i,call!(|_| {IResult::Done(i,t) as IResult<&[u8],u8,u32>}),
-        7 => take!(4) |
-        8 => take!(16)
-    )
+    match t {
+        7 => take!(i, 4),
+        8 => take!(i, 16),
+        _ => IResult::Error(ErrorKind::Switch),
+    }
 }
 
 fn parse_ikev2_ts<'a>(i: &'a[u8]) -> IResult<&'a[u8],TrafficSelector<'a>> {
