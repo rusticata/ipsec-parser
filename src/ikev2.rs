@@ -230,7 +230,7 @@ pub struct IkeV2GenericPayload<'a> {
 }
 
 /// Defined in [RFC7296]
-#[derive(Clone,Debug,PartialEq)]
+#[derive(Clone,PartialEq)]
 pub struct IkeV2Transform<'a> {
     pub last: u8,
     pub reserved1: u8,
