@@ -294,6 +294,16 @@ pub struct NoncePayload<'a> {
     pub nonce_data: &'a[u8],
 }
 
+/// Defined in [RFC7296] section 3.10
+#[derive(Debug,PartialEq)]
+pub struct NotifyPayload<'a> {
+    pub protocol_id: u8,
+    pub spi_size: u8,
+    pub notify_type: u16,
+    pub spi: Option<&'a[u8]>,
+    pub notify_data: Option<&'a[u8]>,
+}
+
 enum_from_primitive! {
 /// Defined in [RFC7296] section 3.13.1
 #[derive(Debug,PartialEq)]
@@ -374,6 +384,7 @@ pub enum IkeV2PayloadContent<'a> {
     CertificateRequest(CertificateRequestPayload<'a>),
 
     Nonce(NoncePayload<'a>),
+    Notify(NotifyPayload<'a>),
 
     TSi(TrafficSelectorPayload<'a>),
     TSr(TrafficSelectorPayload<'a>),
@@ -610,6 +621,26 @@ pub fn parse_ikev2_payload_nonce<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8]
         ))
 }
 
+pub fn parse_ikev2_payload_notify<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
+    do_parse!(i,
+        proto_id:   be_u8 >>
+        spi_sz:     be_u8 >>
+        notif_type: be_u16 >>
+        spi:        cond!(spi_sz > 0, take!(spi_sz)) >>
+        notif_data: cond!(length > 8 + spi_sz as u16, take!(length-(8+spi_sz as u16))) >>
+        (
+            IkeV2PayloadContent::Notify(
+                NotifyPayload{
+                    protocol_id: proto_id,
+                    spi_size:    spi_sz,
+                    notify_type: notif_type,
+                    spi:         spi,
+                    notify_data: notif_data,
+                }
+            )
+        ))
+}
+
 // XXX ...
 
 fn parse_ts_addr<'a>(i: &'a[u8], t: u8) -> IResult<&'a[u8],&'a[u8]> {
@@ -688,6 +719,7 @@ pub fn parse_ikev2_payload_with_type(i: &[u8], length: u16, next_payload_type: u
         // Some(IkeNextPayloadType::Authentication)           => parse_ikev2_payload_unknown,
         // Authentication
         Some(IkeNextPayloadType::Nonce)                    => parse_ikev2_payload_nonce,
+        Some(IkeNextPayloadType::Notify)                   => parse_ikev2_payload_notify,
         // ...
         Some(IkeNextPayloadType::TrafficSelectorInitiator) => parse_ikev2_payload_ts_init,
         Some(IkeNextPayloadType::TrafficSelectorResponder) => parse_ikev2_payload_ts_resp,
@@ -718,6 +750,7 @@ fn parse_ikev2_payload_list_fold<'a>(mut v: Vec<IkeV2Payload<'a>>, p: IkeV2Gener
         },
         _ => {
             // XXX how to return error in fold_many1 ?
+            // println!("parsing failed: type={} {:?}", next_payload_type, p.payload);
             assert!(false);
         },
     };
