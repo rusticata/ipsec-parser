@@ -11,3 +11,4 @@ authors = ["Pierre Chifflier <chifflier@wzdftpd.net>"]
 [dependencies]
 nom = "^2.0"
 enum_primitive = "0.1.0"
+rusticata-macros = "0.3.1"
