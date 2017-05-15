@@ -634,7 +634,6 @@ pub fn parse_ikev2_payload_notify<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8
         spi_sz:     be_u8 >>
         notif_type: be_u16 >>
         spi:        cond!(spi_sz > 0, take!(spi_sz)) >>
-                    error_if!((8+spi_sz as u16) > length, Err::Code(ErrorKind::Custom(128))) >>
         notif_data: cond!(length > 8 + spi_sz as u16, take!(length-(8+spi_sz as u16))) >>
         (
             IkeV2PayloadContent::Notify(
