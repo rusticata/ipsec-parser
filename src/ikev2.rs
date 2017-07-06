@@ -295,7 +295,7 @@ pub struct NoncePayload<'a> {
 }
 
 /// Defined in [RFC7296] section 3.10
-#[derive(Debug,PartialEq)]
+#[derive(PartialEq)]
 pub struct NotifyPayload<'a> {
     pub protocol_id: u8,
     pub spi_size: u8,

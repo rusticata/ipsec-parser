@@ -3,6 +3,7 @@ use std::fmt;
 use enum_primitive::FromPrimitive;
 
 use ikev2::*;
+use ikev2_notify::Notify;
 
 // ------------------------- ikev2.rs ------------------------------
 //
@@ -54,6 +55,22 @@ impl<'a> fmt::Debug for IkeV2Transform<'a> {
             .field("reserved2", &self.reserved2)
             .field("transform_id", &tf_id)
             .field("attributes", &self.attributes)
+            .finish()
+    }
+}
+
+impl<'a> fmt::Debug for NotifyPayload<'a> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        let notify_type = match Notify::from_u16(self.notify_type) {
+            Some(v) => format!("{:?}", v),
+            _       => format!("<Unknown notify type {}>", self.notify_type),
+        };
+        fmt.debug_struct("NotifyPayload")
+            .field("protocol_id", &self.protocol_id)
+            .field("spi_size", &self.spi_size)
+            .field("notify_type", &notify_type)
+            .field("spi", &self.spi)
+            .field("notify_data", &self.notify_data)
             .finish()
     }
 }

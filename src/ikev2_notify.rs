@@ -1,4 +1,8 @@
+enum_from_primitive! {
+/// Defined in [RFC7296] section 3.10.1
+/// See also http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml
 #[derive(Debug,PartialEq)]
+#[repr(u16)]
 pub enum Notify {
     UnsupportedCriticalPayload = 1,
     InvalidIkeSpi = 4,
@@ -30,4 +34,13 @@ pub enum Notify {
     RekeySa = 16393,
     EspTfcPaddingNotSupported = 16394,
     NonFirstFragmentsAlso = 16395,
+
+
+    MultipleAuthSupported = 16404,
+    AnotherAuthFollows = 16405,
+    RedirectSupported = 16406,
+
+    FragmentationSupported = 16430,
+    SignatureHashAlgorithms = 16431,
+}
 }
