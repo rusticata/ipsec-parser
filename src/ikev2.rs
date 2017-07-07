@@ -201,7 +201,7 @@ pub struct IkeV2Header<'a> {
 enum_from_primitive! {
 #[derive(Debug,PartialEq)]
 #[repr(u8)]
-pub enum IkeNextPayloadType {
+pub enum IkePayloadType {
     NoNextPayload = 0,
     SecurityAssociation = 33,
     KeyExchange = 34,
@@ -426,8 +426,8 @@ pub struct IkeV2PayloadHeader {
 }
 
 impl IkeV2PayloadHeader {
-    pub fn get_next_payload_type(&self) -> Option<IkeNextPayloadType> {
-        IkeNextPayloadType::from_u8(self.next_payload_type)
+    pub fn get_next_payload_type(&self) -> Option<IkePayloadType> {
+        IkePayloadType::from_u8(self.next_payload_type)
     }
 }
 
@@ -780,21 +780,21 @@ pub fn parse_ikev2_payload_unknown<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u
 }
 
 pub fn parse_ikev2_payload_with_type(i: &[u8], length: u16, next_payload_type: u8) -> IResult<&[u8],IkeV2PayloadContent> {
-    let f = match IkeNextPayloadType::from_u8(next_payload_type) {
-        // Some(IkeNextPayloadType::NoNextPayload)       => parse_ikev2_payload_unknown, // XXX ?
-        Some(IkeNextPayloadType::SecurityAssociation)      => parse_ikev2_payload_sa,
-        Some(IkeNextPayloadType::KeyExchange)              => parse_ikev2_payload_kex,
-        Some(IkeNextPayloadType::IdentInitiator)           => parse_ikev2_payload_ident_init,
-        Some(IkeNextPayloadType::IdentResponder)           => parse_ikev2_payload_ident_resp,
-        Some(IkeNextPayloadType::Certificate)              => parse_ikev2_payload_certificate,
-        Some(IkeNextPayloadType::CertificateRequest)       => parse_ikev2_payload_certificate_request,
-        Some(IkeNextPayloadType::Authentication)           => parse_ikev2_payload_authentication,
-        Some(IkeNextPayloadType::Nonce)                    => parse_ikev2_payload_nonce,
-        Some(IkeNextPayloadType::Notify)                   => parse_ikev2_payload_notify,
-        Some(IkeNextPayloadType::Delete)                   => parse_ikev2_payload_delete,
-        Some(IkeNextPayloadType::VendorID)                 => parse_ikev2_payload_vendor_id,
-        Some(IkeNextPayloadType::TrafficSelectorInitiator) => parse_ikev2_payload_ts_init,
-        Some(IkeNextPayloadType::TrafficSelectorResponder) => parse_ikev2_payload_ts_resp,
+    let f = match IkePayloadType::from_u8(next_payload_type) {
+        // Some(IkePayloadType::NoNextPayload)       => parse_ikev2_payload_unknown, // XXX ?
+        Some(IkePayloadType::SecurityAssociation)      => parse_ikev2_payload_sa,
+        Some(IkePayloadType::KeyExchange)              => parse_ikev2_payload_kex,
+        Some(IkePayloadType::IdentInitiator)           => parse_ikev2_payload_ident_init,
+        Some(IkePayloadType::IdentResponder)           => parse_ikev2_payload_ident_resp,
+        Some(IkePayloadType::Certificate)              => parse_ikev2_payload_certificate,
+        Some(IkePayloadType::CertificateRequest)       => parse_ikev2_payload_certificate_request,
+        Some(IkePayloadType::Authentication)           => parse_ikev2_payload_authentication,
+        Some(IkePayloadType::Nonce)                    => parse_ikev2_payload_nonce,
+        Some(IkePayloadType::Notify)                   => parse_ikev2_payload_notify,
+        Some(IkePayloadType::Delete)                   => parse_ikev2_payload_delete,
+        Some(IkePayloadType::VendorID)                 => parse_ikev2_payload_vendor_id,
+        Some(IkePayloadType::TrafficSelectorInitiator) => parse_ikev2_payload_ts_init,
+        Some(IkePayloadType::TrafficSelectorResponder) => parse_ikev2_payload_ts_resp,
         // None                                               => parse_ikev2_payload_unknown,
         _ => parse_ikev2_payload_unknown,
         // _ => panic!("unknown type {}",next_payload_type),
@@ -928,7 +928,7 @@ fn test_ikev2_payload_sa() {
     let bytes = IKEV2_PAYLOAD_SA;
     let expected1 = IResult::Done(empty,IkeV2GenericPayload{
         hdr: IkeV2PayloadHeader {
-            next_payload_type: IkeNextPayloadType::KeyExchange as u8,
+            next_payload_type: IkePayloadType::KeyExchange as u8,
             critical: false,
             reserved: 0,
             payload_length: 40,
