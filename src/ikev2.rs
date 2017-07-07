@@ -286,7 +286,13 @@ pub struct CertificateRequestPayload<'a> {
     pub ca_data: &'a[u8],
 }
 
-// XXX Authentication
+/// Defined in [RFC7296] section 3.8
+#[derive(Debug,PartialEq)]
+pub struct AuthenticationPayload<'a> {
+    pub auth_method: u8,
+    pub auth_data: &'a[u8],
+}
+
 
 /// Defined in [RFC7296] section 3.9
 #[derive(Debug,PartialEq)]
@@ -382,7 +388,7 @@ pub enum IkeV2PayloadContent<'a> {
     IDr(IdentificationPayload<'a>),
     Certificate(CertificatePayload<'a>),
     CertificateRequest(CertificateRequestPayload<'a>),
-
+    Authentication(AuthenticationPayload<'a>),
     Nonce(NoncePayload<'a>),
     Notify(NotifyPayload<'a>),
 
@@ -613,8 +619,20 @@ pub fn parse_ikev2_payload_certificate_request<'a>(i: &'a[u8], length: u16) -> I
         ))
 }
 
-
-// XXX Authentication
+pub fn parse_ikev2_payload_authentication<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
+    do_parse!(i,
+           method: be_u8 >>
+                   error_if!(length < 4, Err::Code(ErrorKind::Custom(128))) >>
+                   data: take!(length-4) >>
+        (
+            IkeV2PayloadContent::Authentication(
+                AuthenticationPayload{
+                    auth_method: method,
+                    auth_data:   data,
+                }
+            )
+        ))
+}
 
 pub fn parse_ikev2_payload_nonce<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
     do_parse!(i,
@@ -724,8 +742,7 @@ pub fn parse_ikev2_payload_with_type(i: &[u8], length: u16, next_payload_type: u
         Some(IkeNextPayloadType::IdentResponder)           => parse_ikev2_payload_ident_resp,
         Some(IkeNextPayloadType::Certificate)              => parse_ikev2_payload_certificate,
         Some(IkeNextPayloadType::CertificateRequest)       => parse_ikev2_payload_certificate_request,
-        // Some(IkeNextPayloadType::Authentication)           => parse_ikev2_payload_unknown,
-        // Authentication
+        Some(IkeNextPayloadType::Authentication)           => parse_ikev2_payload_authentication,
         Some(IkeNextPayloadType::Nonce)                    => parse_ikev2_payload_nonce,
         Some(IkeNextPayloadType::Notify)                   => parse_ikev2_payload_notify,
         // ...
