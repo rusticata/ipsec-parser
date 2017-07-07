@@ -310,6 +310,21 @@ pub struct NotifyPayload<'a> {
     pub notify_data: Option<&'a[u8]>,
 }
 
+/// Defined in [RFC7296] section 3.11
+#[derive(Debug,PartialEq)]
+pub struct DeletePayload<'a> {
+    pub protocol_id: u8,
+    pub spi_size: u8,
+    pub num_spi: u16,
+    pub spi: &'a[u8],
+}
+
+/// Defined in [RFC7296] section 3.12
+#[derive(Debug,PartialEq)]
+pub struct VendorIDPayload<'a> {
+    pub vendor_id: &'a[u8],
+}
+
 enum_from_primitive! {
 /// Defined in [RFC7296] section 3.13.1
 #[derive(Debug,PartialEq)]
@@ -391,7 +406,8 @@ pub enum IkeV2PayloadContent<'a> {
     Authentication(AuthenticationPayload<'a>),
     Nonce(NoncePayload<'a>),
     Notify(NotifyPayload<'a>),
-
+    Delete(DeletePayload<'a>),
+    VendorID(VendorIDPayload<'a>),
     TSi(TrafficSelectorPayload<'a>),
     TSr(TrafficSelectorPayload<'a>),
 
@@ -666,7 +682,37 @@ pub fn parse_ikev2_payload_notify<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8
         ))
 }
 
-// XXX ...
+pub fn parse_ikev2_payload_vendor_id<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
+    do_parse!(i,
+                   error_if!(length < 4, Err::Code(ErrorKind::Custom(128))) >>
+        vendor_id: take!(length-8) >>
+        (
+            IkeV2PayloadContent::VendorID(
+                VendorIDPayload{
+                    vendor_id: vendor_id,
+                }
+            )
+        ))
+}
+
+pub fn parse_ikev2_payload_delete<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
+    do_parse!(i,
+        proto_id:   be_u8 >>
+        spi_sz:     be_u8 >>
+        num_spi:    be_u16 >>
+                    error_if!(length < 8, Err::Code(ErrorKind::Custom(128))) >>
+        spi:        take!(length-8) >>
+        (
+            IkeV2PayloadContent::Delete(
+                DeletePayload{
+                    protocol_id: proto_id,
+                    spi_size:    spi_sz,
+                    num_spi:     num_spi,
+                    spi:         spi,
+                }
+            )
+        ))
+}
 
 fn parse_ts_addr<'a>(i: &'a[u8], t: u8) -> IResult<&'a[u8],&'a[u8]> {
     match t {
@@ -745,7 +791,8 @@ pub fn parse_ikev2_payload_with_type(i: &[u8], length: u16, next_payload_type: u
         Some(IkeNextPayloadType::Authentication)           => parse_ikev2_payload_authentication,
         Some(IkeNextPayloadType::Nonce)                    => parse_ikev2_payload_nonce,
         Some(IkeNextPayloadType::Notify)                   => parse_ikev2_payload_notify,
-        // ...
+        Some(IkeNextPayloadType::Delete)                   => parse_ikev2_payload_delete,
+        Some(IkeNextPayloadType::VendorID)                 => parse_ikev2_payload_vendor_id,
         Some(IkeNextPayloadType::TrafficSelectorInitiator) => parse_ikev2_payload_ts_init,
         Some(IkeNextPayloadType::TrafficSelectorResponder) => parse_ikev2_payload_ts_resp,
         // None                                               => parse_ikev2_payload_unknown,
