@@ -2,6 +2,8 @@ use std::fmt;
 
 use enum_primitive::FromPrimitive;
 
+use rusticata_macros::debug::HexSlice;
+
 use ikev2::*;
 use ikev2_notify::Notify;
 
@@ -70,7 +72,7 @@ impl<'a> fmt::Debug for NotifyPayload<'a> {
             .field("spi_size", &self.spi_size)
             .field("notify_type", &notify_type)
             .field("spi", &self.spi)
-            .field("notify_data", &self.notify_data)
+            .field("notify_data", &self.notify_data.map(|o|{HexSlice{d:o}}))
             .finish()
     }
 }
