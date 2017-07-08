@@ -1,6 +1,12 @@
 enum_from_primitive! {
 /// Defined in [RFC7296] section 3.10.1
 /// See also http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml
+/// Extensions:
+/// - [RFC4555] IKEv2 Mobility and Multihoming Protocol (MOBIKE)
+/// - [RFC4739] Multiple Authentication Exchanges in the Internet Key Exchange (IKEv2) Protocol
+/// - [RFC5685] Redirect Mechanism for the Internet Key Exchange Protocol Version 2 (IKEv2)
+/// - [RFC5723] Internet Key Exchange Protocol Version 2 (IKEv2) Session Resumption
+/// - [RFC7427] Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)
 #[derive(Debug,PartialEq)]
 #[repr(u16)]
 pub enum Notify {
