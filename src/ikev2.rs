@@ -295,7 +295,7 @@ pub struct AuthenticationPayload<'a> {
 
 
 /// Defined in [RFC7296] section 3.9
-#[derive(Debug,PartialEq)]
+#[derive(PartialEq)]
 pub struct NoncePayload<'a> {
     pub nonce_data: &'a[u8],
 }

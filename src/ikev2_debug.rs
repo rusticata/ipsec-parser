@@ -61,6 +61,14 @@ impl<'a> fmt::Debug for IkeV2Transform<'a> {
     }
 }
 
+impl<'a> fmt::Debug for NoncePayload<'a> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fmt.debug_struct("NoncePayload")
+            .field("nonce_data", &HexSlice{d:self.nonce_data})
+            .finish()
+    }
+}
+
 impl<'a> fmt::Debug for NotifyPayload<'a> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let notify_type = match Notify::from_u16(self.notify_type) {
