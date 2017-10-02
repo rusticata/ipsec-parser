@@ -1,4 +1,5 @@
 use std::net::{IpAddr,Ipv4Addr,Ipv6Addr};
+use std::convert::From;
 use enum_primitive::FromPrimitive;
 use nom::*;
 
@@ -231,7 +232,7 @@ pub struct IkeV2GenericPayload<'a> {
 
 /// Defined in [RFC7296]
 #[derive(Clone,PartialEq)]
-pub struct IkeV2Transform<'a> {
+pub struct IkeV2RawTransform<'a> {
     pub last: u8,
     pub reserved1: u8,
     pub transform_length: u16,
@@ -239,6 +240,62 @@ pub struct IkeV2Transform<'a> {
     pub reserved2: u8,
     pub transform_id: u16,
     pub attributes: Option<&'a[u8]>,
+}
+
+/// Defined in [RFC7296]
+#[derive(Debug,PartialEq)]
+pub enum IkeV2Transform {
+    Encryption(IkeTransformEncType),
+    PRF(IkeTransformPRFType),
+    Auth(IkeTransformAuthType),
+    DH(IkeTransformDHType),
+    ESN(IkeTransformESNType),
+    /// Unknown tranform (type,id)
+    Unknown(u8,u16),
+}
+
+impl<'a> From<&'a IkeV2RawTransform<'a>> for IkeV2Transform {
+    fn from(r: &IkeV2RawTransform) -> IkeV2Transform {
+        match IkeTransformType::from_u8(r.transform_type) {
+            Some(IkeTransformType::EncryptionAlgorithm) => {
+                match IkeTransformEncType::from_u16(r.transform_id) {
+                    Some(x) => IkeV2Transform::Encryption(x),
+                    _       => IkeV2Transform::Unknown(r.transform_type,r.transform_id),
+                }
+            },
+            Some(IkeTransformType::PseudoRandomFunction) => {
+                match IkeTransformPRFType::from_u16(r.transform_id) {
+                    Some(x) => IkeV2Transform::PRF(x),
+                    _       => IkeV2Transform::Unknown(r.transform_type,r.transform_id),
+                }
+            },
+            Some(IkeTransformType::IntegrityAlgorithm) => {
+                match IkeTransformAuthType::from_u16(r.transform_id) {
+                    Some(x) => IkeV2Transform::Auth(x),
+                    _       => IkeV2Transform::Unknown(r.transform_type,r.transform_id),
+                }
+            },
+            Some(IkeTransformType::DiffieHellmanGroup) => {
+                match IkeTransformDHType::from_u16(r.transform_id) {
+                    Some(x) => IkeV2Transform::DH(x),
+                    _       => IkeV2Transform::Unknown(r.transform_type,r.transform_id),
+                }
+            },
+            Some(IkeTransformType::ExtendedSequenceNumbers) => {
+                match IkeTransformESNType::from_u16(r.transform_id) {
+                    Some(x) => IkeV2Transform::ESN(x),
+                    _       => IkeV2Transform::Unknown(r.transform_type,r.transform_id),
+                }
+            },
+            _ => IkeV2Transform::Unknown(r.transform_type,r.transform_id)
+        }
+    }
+}
+
+impl<'a> From<IkeV2RawTransform<'a>> for IkeV2Transform {
+    fn from(r: IkeV2RawTransform) -> IkeV2Transform {
+        (&r).into()
+    }
 }
 
 /// Defined in [RFC7296]
@@ -252,7 +309,7 @@ pub struct IkeV2Proposal<'a> {
     pub spi_size: u8,
     pub num_transforms: u8,
     pub spi: Option<&'a[u8]>,
-    pub transforms: Vec<IkeV2Transform<'a>>,
+    pub transforms: Vec<IkeV2RawTransform<'a>>,
 }
 
 /// Defined in [RFC7296]
@@ -490,7 +547,7 @@ named!(pub parse_ikev2_payload_generic<IkeV2GenericPayload>,
     )
 );
 
-named!(pub parse_ikev2_transform<IkeV2Transform>,
+named!(pub parse_ikev2_transform<IkeV2RawTransform>,
     do_parse!(
            last: be_u8
         >> reserved1: be_u8
@@ -500,7 +557,7 @@ named!(pub parse_ikev2_transform<IkeV2Transform>,
         >> transform_id: be_u16
         >> attributes: cond!(transform_length > 8,take!(transform_length-8))
         >> (
-            IkeV2Transform{
+            IkeV2RawTransform{
                 last: last,
                 reserved1:reserved1,
                 transform_length: transform_length,
@@ -946,7 +1003,7 @@ fn test_ikev2_payload_sa() {
             num_transforms: 3,
             spi: None,
             transforms: vec![
-                IkeV2Transform{
+                IkeV2RawTransform{
                     last: 3,
                     reserved1: 0,
                     transform_length: 12,
@@ -955,7 +1012,7 @@ fn test_ikev2_payload_sa() {
                     transform_id: 20,
                     attributes: Some(attrs1),
                 },
-                IkeV2Transform{
+                IkeV2RawTransform{
                     last: 3,
                     reserved1: 0,
                     transform_length: 8,
@@ -964,7 +1021,7 @@ fn test_ikev2_payload_sa() {
                     transform_id: 5,
                     attributes: None,
                 },
-                IkeV2Transform{
+                IkeV2RawTransform{
                     last: 0,
                     reserved1: 0,
                     transform_length: 8,

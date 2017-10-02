@@ -9,7 +9,7 @@ use ikev2_notify::Notify;
 
 // ------------------------- ikev2.rs ------------------------------
 //
-impl<'a> fmt::Debug for IkeV2Transform<'a> {
+impl<'a> fmt::Debug for IkeV2RawTransform<'a> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let (tf_type, tf_id) = match IkeTransformType::from_u8(self.transform_type) {
             Some(IkeTransformType::EncryptionAlgorithm) => {
@@ -49,7 +49,7 @@ impl<'a> fmt::Debug for IkeV2Transform<'a> {
             },
             None    => (format!("<Unknown transform type {}>", self.transform_type),"".to_string()),
         };
-        fmt.debug_struct("IkeV2Transform")
+        fmt.debug_struct("IkeV2RawTransform")
             .field("last", &self.last)
             .field("reserved1", &self.reserved1)
             .field("transform_length", &self.transform_length)
