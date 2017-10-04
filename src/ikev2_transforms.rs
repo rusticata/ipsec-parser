@@ -52,6 +52,24 @@ pub enum IkeTransformEncType {
 }
 }
 
+impl IkeTransformEncType {
+    pub fn is_aead(&self) -> bool {
+        match self {
+            &IkeTransformEncType::AesCCM8 |
+            &IkeTransformEncType::AesCCM12 |
+            &IkeTransformEncType::AesCCM16 |
+            &IkeTransformEncType::AesGCM8 |
+            &IkeTransformEncType::AesGCM12 |
+            &IkeTransformEncType::AesGCM16 |
+            &IkeTransformEncType::CamelliaCCM8 |
+            &IkeTransformEncType::CamelliaCCM12 |
+            &IkeTransformEncType::CamelliaCCM16 |
+            &IkeTransformEncType::Chacha20Poly1305 => true,
+            _ => false,
+        }
+    }
+}
+
 enum_from_primitive! {
 /// Defined in [RFC7296] section 3.3.2
 /// See also http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml
