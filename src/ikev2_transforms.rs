@@ -54,17 +54,17 @@ pub enum IkeTransformEncType {
 
 impl IkeTransformEncType {
     pub fn is_aead(&self) -> bool {
-        match self {
-            &IkeTransformEncType::AesCCM8 |
-            &IkeTransformEncType::AesCCM12 |
-            &IkeTransformEncType::AesCCM16 |
-            &IkeTransformEncType::AesGCM8 |
-            &IkeTransformEncType::AesGCM12 |
-            &IkeTransformEncType::AesGCM16 |
-            &IkeTransformEncType::CamelliaCCM8 |
-            &IkeTransformEncType::CamelliaCCM12 |
-            &IkeTransformEncType::CamelliaCCM16 |
-            &IkeTransformEncType::Chacha20Poly1305 => true,
+        match *self {
+            IkeTransformEncType::AesCCM8 |
+            IkeTransformEncType::AesCCM12 |
+            IkeTransformEncType::AesCCM16 |
+            IkeTransformEncType::AesGCM8 |
+            IkeTransformEncType::AesGCM12 |
+            IkeTransformEncType::AesGCM16 |
+            IkeTransformEncType::CamelliaCCM8 |
+            IkeTransformEncType::CamelliaCCM12 |
+            IkeTransformEncType::CamelliaCCM16 |
+            IkeTransformEncType::Chacha20Poly1305 => true,
             _ => false,
         }
     }
