@@ -90,7 +90,7 @@ named!(pub parse_ikev2_proposal<IkeV2Proposal>,
         >> error_if!(p_len < (8u16+spi_size as u16), Err::Code(ErrorKind::Custom(128)))
         >> transforms: flat_map!(
             take!( p_len - (8u16+spi_size as u16) ),
-            many_m_n!(num_transforms as usize,num_transforms as usize,parse_ikev2_transform)
+            count!(parse_ikev2_transform, num_transforms as usize)
             )
         >> ( IkeV2Proposal{
             last:last,
