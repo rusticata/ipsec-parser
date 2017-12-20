@@ -44,6 +44,7 @@ pub enum IkeCertificateEncodingType {
     HashUrlX509Cert = 12,
     HashUrlX509Bundle = 13,
     OCSPContent = 14,
+    // Raw public key support, defined in [RFC7670]
     RawPublicKey = 15,
 }
 }

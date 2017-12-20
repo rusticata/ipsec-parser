@@ -18,7 +18,7 @@ pub enum IkeTransformType {
 enum_from_primitive! {
 /// Defined in [RFC7296] section 3.3.2
 /// See also http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml
-#[derive(Debug,PartialEq)]
+#[derive(Clone,Copy,Debug,PartialEq)]
 #[repr(u16)]
 pub enum IkeTransformEncType {
     DesIV64 = 1,
@@ -73,9 +73,10 @@ impl IkeTransformEncType {
 enum_from_primitive! {
 /// Defined in [RFC7296] section 3.3.2
 /// See also http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml
-#[derive(Debug,PartialEq)]
+#[derive(Clone,Copy,Debug,PartialEq)]
 #[repr(u16)]
 pub enum IkeTransformPRFType {
+    Null = 0,
     HmacMd5 = 1,
     HmacSha1 = 2,
     HmacTiger = 3,
@@ -89,7 +90,7 @@ pub enum IkeTransformPRFType {
 
 enum_from_primitive! {
 /// Defined in [RFC7296] section 3.3.2
-#[derive(Debug,PartialEq)]
+#[derive(Clone,Copy,Debug,PartialEq)]
 #[repr(u16)]
 pub enum IkeTransformAuthType {
     None = 0,
@@ -113,7 +114,7 @@ pub enum IkeTransformAuthType {
 enum_from_primitive! {
 /// Defined in [RFC7296] section 3.3.2
 /// See also http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml
-#[derive(Debug,PartialEq)]
+#[derive(Clone,Copy,Debug,PartialEq)]
 #[repr(u16)]
 pub enum IkeTransformDHType {
     None = 0,
@@ -144,7 +145,7 @@ pub enum IkeTransformDHType {
 
 enum_from_primitive! {
 /// Defined in [RFC7296] section 3.3.2
-#[derive(Debug,PartialEq)]
+#[derive(Clone,Copy,Debug,PartialEq)]
 #[repr(u16)]
 pub enum IkeTransformESNType {
     NoESN = 0,
