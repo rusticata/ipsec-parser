@@ -38,7 +38,7 @@ named!(pub parse_ikev2_payload_generic<IkeV2GenericPayload>,
             tuple!(take_bits!(u8,1),take_bits!(u8,7))
             )
         >> len: be_u16
-        >> error_if!(len < 4, Err::Code(ErrorKind::Custom(128)))
+        >> error_if!(len < 4, ErrorKind::Custom(128) )
         >> data: take!(len-4)
         >> (
             IkeV2GenericPayload{
@@ -87,7 +87,7 @@ named!(pub parse_ikev2_proposal<IkeV2Proposal>,
         >> spi_size: be_u8
         >> num_transforms: be_u8
         >> spi: cond!(spi_size > 0,take!(spi_size))
-        >> error_if!(p_len < (8u16+spi_size as u16), Err::Code(ErrorKind::Custom(128)))
+        >> error_if!(p_len < (8u16+spi_size as u16), ErrorKind::Custom(128))
         >> transforms: flat_map!(
             take!( p_len - (8u16+spi_size as u16) ),
             count!(parse_ikev2_transform, num_transforms as usize)
@@ -117,7 +117,7 @@ pub fn parse_ikev2_payload_kex<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],I
     do_parse!(i,
            dh:       be_u16
         >> reserved: be_u16
-        >> error_if!(length < 4, Err::Code(ErrorKind::Custom(128)))
+        >> error_if!(length < 4, ErrorKind::Custom(128))
         >> data:     take!(length-4)
         >> (
             IkeV2PayloadContent::KE(
@@ -136,7 +136,7 @@ pub fn parse_ikev2_payload_ident_init<'a>(i: &'a[u8], length: u16) -> IResult<&'
            id_type:   be_u8
         >> reserved1: be_u8
         >> reserved2: be_u16
-        >> error_if!(length < 4, Err::Code(ErrorKind::Custom(128)))
+        >> error_if!(length < 4, ErrorKind::Custom(128))
         >> data:      take!(length-4)
         >> (
             IkeV2PayloadContent::IDi(
@@ -155,7 +155,7 @@ pub fn parse_ikev2_payload_ident_resp<'a>(i: &'a[u8], length: u16) -> IResult<&'
            id_type:   be_u8
         >> reserved1: be_u8
         >> reserved2: be_u16
-        >> error_if!(length < 4, Err::Code(ErrorKind::Custom(128)))
+        >> error_if!(length < 4, ErrorKind::Custom(128))
         >> data:      take!(length-4)
         >> (
             IkeV2PayloadContent::IDr(
@@ -172,7 +172,7 @@ pub fn parse_ikev2_payload_ident_resp<'a>(i: &'a[u8], length: u16) -> IResult<&'
 pub fn parse_ikev2_payload_certificate<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
     do_parse!(i,
            encoding: be_u8
-        >> error_if!(length < 1, Err::Code(ErrorKind::Custom(128)))
+        >> error_if!(length < 1, ErrorKind::Custom(128))
         >> data: take!(length-1)
         >> (
             IkeV2PayloadContent::Certificate(
@@ -187,7 +187,7 @@ pub fn parse_ikev2_payload_certificate<'a>(i: &'a[u8], length: u16) -> IResult<&
 pub fn parse_ikev2_payload_certificate_request<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
     do_parse!(i,
            encoding: be_u8
-        >> error_if!(length < 1, Err::Code(ErrorKind::Custom(128)))
+        >> error_if!(length < 1, ErrorKind::Custom(128))
         >> data: take!(length-1)
         >> (
             IkeV2PayloadContent::CertificateRequest(
@@ -202,7 +202,7 @@ pub fn parse_ikev2_payload_certificate_request<'a>(i: &'a[u8], length: u16) -> I
 pub fn parse_ikev2_payload_authentication<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
     do_parse!(i,
            method: be_u8 >>
-                   error_if!(length < 4, Err::Code(ErrorKind::Custom(128))) >>
+                   error_if!(length < 4, ErrorKind::Custom(128)) >>
                    data: take!(length-4) >>
         (
             IkeV2PayloadContent::Authentication(
@@ -248,7 +248,7 @@ pub fn parse_ikev2_payload_notify<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8
 
 pub fn parse_ikev2_payload_vendor_id<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
     do_parse!(i,
-                   error_if!(length < 4, Err::Code(ErrorKind::Custom(128))) >>
+                   error_if!(length < 4, ErrorKind::Custom(128)) >>
         vendor_id: take!(length-8) >>
         (
             IkeV2PayloadContent::VendorID(
@@ -264,7 +264,7 @@ pub fn parse_ikev2_payload_delete<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8
         proto_id:   be_u8 >>
         spi_sz:     be_u8 >>
         num_spi:    be_u16 >>
-                    error_if!(length < 8, Err::Code(ErrorKind::Custom(128))) >>
+                    error_if!(length < 8, ErrorKind::Custom(128)) >>
         spi:        take!(length-8) >>
         (
             IkeV2PayloadContent::Delete(
@@ -282,7 +282,7 @@ fn parse_ts_addr<'a>(i: &'a[u8], t: u8) -> IResult<&'a[u8],&'a[u8]> {
     match t {
         7 => take!(i, 4),
         8 => take!(i, 16),
-        _ => IResult::Error(error_code!(ErrorKind::Switch)),
+        _ => IResult::Error(ErrorKind::Switch),
     }
 }
 
@@ -312,7 +312,7 @@ pub fn parse_ikev2_payload_ts<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],Tr
     do_parse!(i,
            num_ts: be_u8
         >> reserved: take!(3)
-        >> error_if!(length < 4, Err::Code(ErrorKind::Custom(128)))
+        >> error_if!(length < 4, ErrorKind::Custom(128))
         >> ts: flat_map!(take!(length-4),
             many1!(parse_ikev2_ts)
         )
