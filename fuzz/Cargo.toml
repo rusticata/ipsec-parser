@@ -1,0 +1,29 @@
+
+[package]
+name = "ipsec-parser-fuzz"
+version = "0.0.1"
+authors = ["Automatically generated"]
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+nom = "3.0"
+
+[dependencies.ipsec-parser]
+path = ".."
+[dependencies.libfuzzer-sys]
+git = "https://github.com/rust-fuzz/libfuzzer-sys.git"
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "fuzzer_ikev2_payload_sa"
+path = "fuzzers/fuzzer_ikev2_payload_sa.rs"
+
+[[bin]]
+name = "fuzzer_ikev2_payload_list"
+path = "fuzz_targets/fuzzer_ikev2_payload_list.rs"
