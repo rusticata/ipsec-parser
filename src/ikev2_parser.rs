@@ -248,7 +248,7 @@ pub fn parse_ikev2_payload_notify<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8
 
 pub fn parse_ikev2_payload_vendor_id<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
     do_parse!(i,
-                   error_if!(length < 4, ErrorKind::Custom(128)) >>
+                   error_if!(length < 8, ErrorKind::Custom(128)) >>
         vendor_id: take!(length-8) >>
         (
             IkeV2PayloadContent::VendorID(
