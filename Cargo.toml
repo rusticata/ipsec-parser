@@ -1,14 +1,28 @@
 [package]
-name = "ipsec-parser"
-version = "0.1.0"
 description = "Parser for the IKEv2 protocol"
 license = "MIT/Apache-2.0"
 keywords = ["IPsec","IKE", "IKEv2","protocol","parser","nom"]
 homepage = "https://github.com/rusticata/ipsec-parser"
 repository = "https://github.com/rusticata/ipsec-parser.git"
+documentation = "https://docs.rs/ipsec-parser"
+name = "ipsec-parser"
+version = "0.1.0"
 authors = ["Pierre Chifflier <chifflier@wzdftpd.net>"]
+categories = ["parsing"]
+
+include = [
+  "LICENSE-*",
+  ".gitignore",
+  ".travis.yml",
+  "Cargo.toml",
+  "src/*.rs",
+  "assets/*"
+]
 
 [dependencies]
 nom = "^3"
 enum_primitive = "0.1.0"
 rusticata-macros = "0.4.0"
+
+[badges]
+travis-ci = { repository = "rusticata/ipsec-parser" }
