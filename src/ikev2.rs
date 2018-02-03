@@ -1,16 +1,15 @@
 use std::net::{IpAddr,Ipv4Addr,Ipv6Addr};
 use ikev2_transforms::*;
 
-enum_from_primitive! {
 /// Payload exchange type: SA, Auth, CreateChildSA, etc.
-#[derive(Debug,PartialEq)]
-#[repr(u8)]
-pub enum IkeExchangeType {
-    IkeSAInit = 34,
-    IkeAuth = 35,
-    CreateChildSA = 36,
-    Informational = 37,
-}
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct IkeExchangeType(pub u8);
+
+impl IkeExchangeType {
+    pub const IKE_SA_INIT     : IkeExchangeType = IkeExchangeType(34);
+    pub const IKE_AUTH        : IkeExchangeType = IkeExchangeType(35);
+    pub const CREATE_CHILD_SA : IkeExchangeType = IkeExchangeType(36);
+    pub const INFORMATIONAL   : IkeExchangeType = IkeExchangeType(37);
 }
 
 /// Protocol type: IKE, AH or ESP
@@ -23,34 +22,6 @@ impl ProtocolID {
     pub const IKE : ProtocolID = ProtocolID(1);
     pub const AH  : ProtocolID = ProtocolID(2);
     pub const ESP : ProtocolID = ProtocolID(3);
-}
-
-enum_from_primitive! {
-/// Encoding of certificate
-///
-/// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.6
-///
-/// See also [IKEV2IANA](https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml) for the latest values.
-#[derive(Debug,PartialEq)]
-#[repr(u8)]
-pub enum IkeCertificateEncodingType {
-    Pkcs7X509 = 1,
-    Pgp = 2,
-    Dns = 3,
-    X509Sig = 4,
-    // 5 is reserved
-    Kerberos = 6,
-    Crl = 7,
-    Arl = 8,
-    SpkiCert = 9,
-    X509Attr = 10,
-    RawRsa = 11,
-    HashUrlX509Cert = 12,
-    HashUrlX509Bundle = 13,
-    OCSPContent = 14,
-    /// Raw public key support, defined in [RFC7670](https://tools.ietf.org/html/rfc7670)
-    RawPublicKey = 15,
-}
 }
 
 pub const IKEV2_FLAG_INITIATOR : u8 = 0b1000;
@@ -97,7 +68,7 @@ pub struct IkeV2Header<'a> {
     pub next_payload: IkePayloadType,
     pub maj_ver: u8,
     pub min_ver: u8,
-    pub exch_type: u8,
+    pub exch_type: IkeExchangeType,
     pub flags: u8,
     pub msg_id: u32,
     pub length: u32,
@@ -338,6 +309,10 @@ impl CertificateEncoding {
     pub const X509Cert_HashUrl            : CertificateEncoding = CertificateEncoding(12);
     /// Hash and URL of X.509 bundle
     pub const X509Bundle_HashUrl          : CertificateEncoding = CertificateEncoding(13);
+    /// OCSP Content ([RFC4806](https://tools.ietf.org/html/rfc4806))
+    pub const OCSPContent                 : CertificateEncoding = CertificateEncoding(14);
+    /// Raw Public Key ([RFC7670](https://tools.ietf.org/html/rfc7670))
+    pub const RawPublicKey                : CertificateEncoding = CertificateEncoding(15);
 }
 
 /// Certificate Request Payload
