@@ -1,23 +1,28 @@
 use std::convert::From;
 use enum_primitive::FromPrimitive;
 
-enum_from_primitive! {
-/// Defined in [RFC7296] section 3.3.2
-#[derive(Debug,PartialEq)]
-#[repr(u8)]
-pub enum IkeTransformType {
-    EncryptionAlgorithm = 1,
-    PseudoRandomFunction = 2,
-    IntegrityAlgorithm = 3,
-    DiffieHellmanGroup = 4,
-    ExtendedSequenceNumbers = 5,
-}
+/// Transform (cryptographic algorithm) type
+///
+/// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct IkeTransformType(pub u8);
+
+#[allow(non_upper_case_globals)]
+impl IkeTransformType {
+    pub const EncryptionAlgorithm     : IkeTransformType = IkeTransformType(1);
+    pub const PseudoRandomFunction    : IkeTransformType = IkeTransformType(2);
+    pub const IntegrityAlgorithm      : IkeTransformType = IkeTransformType(3);
+    pub const DiffieHellmanGroup      : IkeTransformType = IkeTransformType(4);
+    pub const ExtendedSequenceNumbers : IkeTransformType = IkeTransformType(5);
 }
 
 
 enum_from_primitive! {
-/// Defined in [RFC7296] section 3.3.2
-/// See also http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml
+/// Encryption values
+///
+/// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
+///
+/// See also [IKEV2IANA](https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml) for the latest values.
 #[derive(Clone,Copy,Debug,PartialEq)]
 #[repr(u16)]
 pub enum IkeTransformEncType {
@@ -71,8 +76,11 @@ impl IkeTransformEncType {
 }
 
 enum_from_primitive! {
-/// Defined in [RFC7296] section 3.3.2
-/// See also http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml
+/// Pseudo-Random Function values
+///
+/// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
+///
+/// See also [IKEV2IANA](https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml) for the latest values.
 #[derive(Clone,Copy,Debug,PartialEq)]
 #[repr(u16)]
 pub enum IkeTransformPRFType {
@@ -89,7 +97,9 @@ pub enum IkeTransformPRFType {
 }
 
 enum_from_primitive! {
-/// Defined in [RFC7296] section 3.3.2
+/// Authentication / Integrity values
+///
+/// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
 #[derive(Clone,Copy,Debug,PartialEq)]
 #[repr(u16)]
 pub enum IkeTransformAuthType {
@@ -112,8 +122,11 @@ pub enum IkeTransformAuthType {
 }
 
 enum_from_primitive! {
-/// Defined in [RFC7296] section 3.3.2
-/// See also http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml
+/// Diffie-Hellman values
+///
+/// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
+///
+/// See also [IKEV2IANA](https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml) for the latest values.
 #[derive(Clone,Copy,Debug,PartialEq)]
 #[repr(u16)]
 pub enum IkeTransformDHType {
@@ -144,7 +157,9 @@ pub enum IkeTransformDHType {
 }
 
 enum_from_primitive! {
-/// Defined in [RFC7296] section 3.3.2
+/// Extended Sequence Number values
+///
+/// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
 #[derive(Clone,Copy,Debug,PartialEq)]
 #[repr(u16)]
 pub enum IkeTransformESNType {
@@ -153,19 +168,28 @@ pub enum IkeTransformESNType {
 }
 }
 
-/// Defined in [RFC7296]
+/// Raw representation of a transform (cryptographic algorithm) and parameters
+///
+/// Use the `From` method to convert it to a [`IkeV2Transform`](enum.IkeV2Transform.html)
+///
+/// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3
 #[derive(Clone,PartialEq)]
 pub struct IkeV2RawTransform<'a> {
     pub last: u8,
     pub reserved1: u8,
     pub transform_length: u16,
-    pub transform_type: u8,
+    pub transform_type: IkeTransformType,
     pub reserved2: u8,
     pub transform_id: u16,
     pub attributes: Option<&'a[u8]>,
 }
 
-/// Defined in [RFC7296]
+/// IKEv2 Transform (cryptographic algorithm)
+///
+/// This structure is a simple representation of a transform, containing only the type (encryption,
+/// etc.). To store the parameters, use [`IkeV2RawTransform`](struct.IkeV2RawTransform.html).
+///
+/// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3
 #[derive(Debug,PartialEq)]
 pub enum IkeV2Transform {
     Encryption(IkeTransformEncType),
@@ -174,37 +198,37 @@ pub enum IkeV2Transform {
     DH(IkeTransformDHType),
     ESN(IkeTransformESNType),
     /// Unknown tranform (type,id)
-    Unknown(u8,u16),
+    Unknown(IkeTransformType,u16),
 }
 
 impl<'a> From<&'a IkeV2RawTransform<'a>> for IkeV2Transform {
     fn from(r: &IkeV2RawTransform) -> IkeV2Transform {
-        match IkeTransformType::from_u8(r.transform_type) {
-            Some(IkeTransformType::EncryptionAlgorithm) => {
+        match r.transform_type {
+            IkeTransformType::EncryptionAlgorithm => {
                 match IkeTransformEncType::from_u16(r.transform_id) {
                     Some(x) => IkeV2Transform::Encryption(x),
                     _       => IkeV2Transform::Unknown(r.transform_type,r.transform_id),
                 }
             },
-            Some(IkeTransformType::PseudoRandomFunction) => {
+            IkeTransformType::PseudoRandomFunction => {
                 match IkeTransformPRFType::from_u16(r.transform_id) {
                     Some(x) => IkeV2Transform::PRF(x),
                     _       => IkeV2Transform::Unknown(r.transform_type,r.transform_id),
                 }
             },
-            Some(IkeTransformType::IntegrityAlgorithm) => {
+            IkeTransformType::IntegrityAlgorithm => {
                 match IkeTransformAuthType::from_u16(r.transform_id) {
                     Some(x) => IkeV2Transform::Auth(x),
                     _       => IkeV2Transform::Unknown(r.transform_type,r.transform_id),
                 }
             },
-            Some(IkeTransformType::DiffieHellmanGroup) => {
+            IkeTransformType::DiffieHellmanGroup => {
                 match IkeTransformDHType::from_u16(r.transform_id) {
                     Some(x) => IkeV2Transform::DH(x),
                     _       => IkeV2Transform::Unknown(r.transform_type,r.transform_id),
                 }
             },
-            Some(IkeTransformType::ExtendedSequenceNumbers) => {
+            IkeTransformType::ExtendedSequenceNumbers => {
                 match IkeTransformESNType::from_u16(r.transform_id) {
                     Some(x) => IkeV2Transform::ESN(x),
                     _       => IkeV2Transform::Unknown(r.transform_type,r.transform_id),

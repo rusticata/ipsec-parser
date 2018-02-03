@@ -1,4 +1,3 @@
-use enum_primitive::FromPrimitive;
 use nom::*;
 use ikev2::*;
 use ikev2_transforms::*;
@@ -19,7 +18,7 @@ named!(pub parse_ikev2_header<IkeV2Header>,
             IkeV2Header{
                 init_spi: init_spi,
                 resp_spi: resp_spi,
-                next_payload: np,
+                next_payload: IkePayloadType(np),
                 maj_ver: vers.0,
                 min_ver: vers.1,
                 exch_type: ex,
@@ -43,7 +42,7 @@ named!(pub parse_ikev2_payload_generic<IkeV2GenericPayload>,
         >> (
             IkeV2GenericPayload{
                 hdr: IkeV2PayloadHeader {
-                    next_payload_type: np_type,
+                    next_payload_type: IkePayloadType(np_type),
                     critical: b.0 == 1,
                     reserved: b.1,
                     payload_length: len,
@@ -68,7 +67,7 @@ named!(pub parse_ikev2_transform<IkeV2RawTransform>,
                 last: last,
                 reserved1:reserved1,
                 transform_length: transform_length,
-                transform_type: transform_type,
+                transform_type: IkeTransformType(transform_type),
                 reserved2: reserved2,
                 transform_id: transform_id,
                 attributes: attributes,
@@ -97,7 +96,7 @@ named!(pub parse_ikev2_proposal<IkeV2Proposal>,
             reserved:reserved,
             proposal_length: p_len,
             proposal_num: p_num,
-            protocol_id: proto_id,
+            protocol_id: ProtocolID(proto_id),
             spi_size: spi_size,
             num_transforms: num_transforms,
             spi: spi,
@@ -141,7 +140,7 @@ pub fn parse_ikev2_payload_ident_init<'a>(i: &'a[u8], length: u16) -> IResult<&'
         >> (
             IkeV2PayloadContent::IDi(
                 IdentificationPayload{
-                    id_type: id_type,
+                    id_type: IdentificationType(id_type),
                     reserved1: reserved1,
                     reserved2: reserved2,
                     ident_data: data,
@@ -160,7 +159,7 @@ pub fn parse_ikev2_payload_ident_resp<'a>(i: &'a[u8], length: u16) -> IResult<&'
         >> (
             IkeV2PayloadContent::IDr(
                 IdentificationPayload{
-                    id_type: id_type,
+                    id_type: IdentificationType(id_type),
                     reserved1: reserved1,
                     reserved2: reserved2,
                     ident_data: data,
@@ -177,7 +176,7 @@ pub fn parse_ikev2_payload_certificate<'a>(i: &'a[u8], length: u16) -> IResult<&
         >> (
             IkeV2PayloadContent::Certificate(
                 CertificatePayload{
-                    cert_encoding: encoding,
+                    cert_encoding: CertificateEncoding(encoding),
                     cert_data: data,
                 }
             )
@@ -192,7 +191,7 @@ pub fn parse_ikev2_payload_certificate_request<'a>(i: &'a[u8], length: u16) -> I
         >> (
             IkeV2PayloadContent::CertificateRequest(
                 CertificateRequestPayload{
-                    cert_encoding: encoding,
+                    cert_encoding: CertificateEncoding(encoding),
                     ca_data: data,
                 }
             )
@@ -207,7 +206,7 @@ pub fn parse_ikev2_payload_authentication<'a>(i: &'a[u8], length: u16) -> IResul
         (
             IkeV2PayloadContent::Authentication(
                 AuthenticationPayload{
-                    auth_method: method,
+                    auth_method: AuthenticationMethod(method),
                     auth_data:   data,
                 }
             )
@@ -236,7 +235,7 @@ pub fn parse_ikev2_payload_notify<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8
         (
             IkeV2PayloadContent::Notify(
                 NotifyPayload{
-                    protocol_id: proto_id,
+                    protocol_id: ProtocolID(proto_id),
                     spi_size:    spi_sz,
                     notify_type: notif_type,
                     spi:         spi,
@@ -269,7 +268,7 @@ pub fn parse_ikev2_payload_delete<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8
         (
             IkeV2PayloadContent::Delete(
                 DeletePayload{
-                    protocol_id: proto_id,
+                    protocol_id: ProtocolID(proto_id),
                     spi_size:    spi_sz,
                     num_spi:     num_spi,
                     spi:         spi,
@@ -297,7 +296,7 @@ fn parse_ikev2_ts<'a>(i: &'a[u8]) -> IResult<&'a[u8],TrafficSelector<'a>> {
         >> end_addr: apply!(parse_ts_addr,ts_type)
         >> (
             TrafficSelector{
-                ts_type: ts_type,
+                ts_type: TSType(ts_type),
                 ip_proto_id: ip_proto_id,
                 sel_length: sel_length,
                 start_port: start_port,
@@ -343,22 +342,22 @@ pub fn parse_ikev2_payload_unknown<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u
     map!(i, take!(length), |d| { IkeV2PayloadContent::Unknown(d) })
 }
 
-pub fn parse_ikev2_payload_with_type(i: &[u8], length: u16, next_payload_type: u8) -> IResult<&[u8],IkeV2PayloadContent> {
-    let f = match IkePayloadType::from_u8(next_payload_type) {
-        // Some(IkePayloadType::NoNextPayload)       => parse_ikev2_payload_unknown, // XXX ?
-        Some(IkePayloadType::SecurityAssociation)      => parse_ikev2_payload_sa,
-        Some(IkePayloadType::KeyExchange)              => parse_ikev2_payload_kex,
-        Some(IkePayloadType::IdentInitiator)           => parse_ikev2_payload_ident_init,
-        Some(IkePayloadType::IdentResponder)           => parse_ikev2_payload_ident_resp,
-        Some(IkePayloadType::Certificate)              => parse_ikev2_payload_certificate,
-        Some(IkePayloadType::CertificateRequest)       => parse_ikev2_payload_certificate_request,
-        Some(IkePayloadType::Authentication)           => parse_ikev2_payload_authentication,
-        Some(IkePayloadType::Nonce)                    => parse_ikev2_payload_nonce,
-        Some(IkePayloadType::Notify)                   => parse_ikev2_payload_notify,
-        Some(IkePayloadType::Delete)                   => parse_ikev2_payload_delete,
-        Some(IkePayloadType::VendorID)                 => parse_ikev2_payload_vendor_id,
-        Some(IkePayloadType::TrafficSelectorInitiator) => parse_ikev2_payload_ts_init,
-        Some(IkePayloadType::TrafficSelectorResponder) => parse_ikev2_payload_ts_resp,
+pub fn parse_ikev2_payload_with_type(i: &[u8], length: u16, next_payload_type: IkePayloadType) -> IResult<&[u8],IkeV2PayloadContent> {
+    let f = match next_payload_type {
+        // IkePayloadType::NoNextPayload       => parse_ikev2_payload_unknown, // XXX ?
+        IkePayloadType::SecurityAssociation      => parse_ikev2_payload_sa,
+        IkePayloadType::KeyExchange              => parse_ikev2_payload_kex,
+        IkePayloadType::IdentInitiator           => parse_ikev2_payload_ident_init,
+        IkePayloadType::IdentResponder           => parse_ikev2_payload_ident_resp,
+        IkePayloadType::Certificate              => parse_ikev2_payload_certificate,
+        IkePayloadType::CertificateRequest       => parse_ikev2_payload_certificate_request,
+        IkePayloadType::Authentication           => parse_ikev2_payload_authentication,
+        IkePayloadType::Nonce                    => parse_ikev2_payload_nonce,
+        IkePayloadType::Notify                   => parse_ikev2_payload_notify,
+        IkePayloadType::Delete                   => parse_ikev2_payload_delete,
+        IkePayloadType::VendorID                 => parse_ikev2_payload_vendor_id,
+        IkePayloadType::TrafficSelectorInitiator => parse_ikev2_payload_ts_init,
+        IkePayloadType::TrafficSelectorResponder => parse_ikev2_payload_ts_resp,
         // None                                               => parse_ikev2_payload_unknown,
         _ => parse_ikev2_payload_unknown,
         // _ => panic!("unknown type {}",next_payload_type),
@@ -392,7 +391,7 @@ fn parse_ikev2_payload_list_fold<'a>(res_v: Result<Vec<IkeV2Payload<'a>>,&'stati
     }
 }
 
-pub fn parse_ikev2_payload_list<'a>(i: &'a[u8], initial_type: u8) -> IResult<&'a[u8],Result<Vec<IkeV2Payload<'a>>,&'static str>> {
+pub fn parse_ikev2_payload_list<'a>(i: &'a[u8], initial_type: IkePayloadType) -> IResult<&'a[u8],Result<Vec<IkeV2Payload<'a>>,&'static str>> {
     fold_many1!(i,
         parse_ikev2_payload_generic,
         Ok(vec![
@@ -442,7 +441,7 @@ fn test_ikev2_init_req() {
     let expected = IResult::Done(empty,IkeV2Header{
         init_spi: &bytes[0..8],
         resp_spi: &bytes[8..16],
-        next_payload: 33,
+        next_payload: IkePayloadType::SecurityAssociation,
         maj_ver: 2,
         min_ver: 0,
         exch_type: 34,
@@ -489,7 +488,7 @@ fn test_ikev2_payload_sa() {
     let bytes = IKEV2_PAYLOAD_SA;
     let expected1 = IResult::Done(empty,IkeV2GenericPayload{
         hdr: IkeV2PayloadHeader {
-            next_payload_type: IkePayloadType::KeyExchange as u8,
+            next_payload_type: IkePayloadType::KeyExchange,
             critical: false,
             reserved: 0,
             payload_length: 40,
@@ -505,7 +504,7 @@ fn test_ikev2_payload_sa() {
             reserved: 0,
             proposal_length: 36,
             proposal_num: 1,
-            protocol_id: 1,
+            protocol_id: ProtocolID::IKE,
             spi_size: 0,
             num_transforms: 3,
             spi: None,
@@ -514,7 +513,7 @@ fn test_ikev2_payload_sa() {
                     last: 3,
                     reserved1: 0,
                     transform_length: 12,
-                    transform_type: 1,
+                    transform_type: IkeTransformType::EncryptionAlgorithm,
                     reserved2: 0,
                     transform_id: 20,
                     attributes: Some(attrs1),
@@ -523,7 +522,7 @@ fn test_ikev2_payload_sa() {
                     last: 3,
                     reserved1: 0,
                     transform_length: 8,
-                    transform_type: 2,
+                    transform_type: IkeTransformType::PseudoRandomFunction,
                     reserved2: 0,
                     transform_id: 5,
                     attributes: None,
@@ -532,7 +531,7 @@ fn test_ikev2_payload_sa() {
                     last: 0,
                     reserved1: 0,
                     transform_length: 8,
-                    transform_type: 4,
+                    transform_type: IkeTransformType::DiffieHellmanGroup,
                     reserved2: 0,
                     transform_id: 30,
                     attributes: None,
@@ -554,7 +553,7 @@ fn test_ikev2_payload_sa() {
 fn test_ikev2_parse_payload_many() {
     // let empty = &b""[..];
     let bytes = &IKEV2_INIT_REQ[28..];
-    let res = parse_ikev2_payload_list(&bytes,33);
+    let res = parse_ikev2_payload_list(&bytes, IkePayloadType::SecurityAssociation);
     println!("{:?}",res);
 }
 
