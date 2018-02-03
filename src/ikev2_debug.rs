@@ -5,7 +5,6 @@ use enum_primitive::FromPrimitive;
 use rusticata_macros::debug::HexSlice;
 
 use ikev2::*;
-use ikev2_notify::Notify;
 use ikev2_transforms::*;
 
 // ------------------------- ikev2_transforms.rs ------------------------------
@@ -74,14 +73,10 @@ impl<'a> fmt::Debug for NoncePayload<'a> {
 
 impl<'a> fmt::Debug for NotifyPayload<'a> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let notify_type = match Notify::from_u16(self.notify_type) {
-            Some(v) => format!("{:?}", v),
-            _       => format!("<Unknown notify type {}>", self.notify_type),
-        };
         fmt.debug_struct("NotifyPayload")
             .field("protocol_id", &self.protocol_id)
             .field("spi_size", &self.spi_size)
-            .field("notify_type", &notify_type)
+            .field("notify_type", &self.notify_type)
             .field("spi", &self.spi)
             .field("notify_data", &self.notify_data.map(|o|{HexSlice{d:o}}))
             .finish()

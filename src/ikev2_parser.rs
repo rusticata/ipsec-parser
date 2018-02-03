@@ -1,6 +1,7 @@
 use nom::*;
 use ikev2::*;
 use ikev2_transforms::*;
+use ikev2_notify::NotifyType;
 
 named!(pub parse_ikev2_header<IkeV2Header>,
     do_parse!(
@@ -237,7 +238,7 @@ pub fn parse_ikev2_payload_notify<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8
                 NotifyPayload{
                     protocol_id: ProtocolID(proto_id),
                     spi_size:    spi_sz,
-                    notify_type: notif_type,
+                    notify_type: NotifyType(notif_type),
                     spi:         spi,
                     notify_data: notif_data,
                 }

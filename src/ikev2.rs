@@ -1,5 +1,6 @@
 use std::net::{IpAddr,Ipv4Addr,Ipv6Addr};
 use ikev2_transforms::*;
+use ikev2_notify::NotifyType;
 
 /// Payload exchange type: SA, Auth, CreateChildSA, etc.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -407,7 +408,7 @@ pub struct NoncePayload<'a> {
 pub struct NotifyPayload<'a> {
     pub protocol_id: ProtocolID,
     pub spi_size: u8,
-    pub notify_type: u16,
+    pub notify_type: NotifyType,
     pub spi: Option<&'a[u8]>,
     pub notify_data: Option<&'a[u8]>,
 }
