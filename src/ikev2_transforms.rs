@@ -1,5 +1,4 @@
 use std::convert::From;
-use enum_primitive::FromPrimitive;
 
 /// Transform (cryptographic algorithm) type
 ///
@@ -17,155 +16,165 @@ impl IkeTransformType {
 }
 
 
-enum_from_primitive! {
 /// Encryption values
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
 ///
 /// See also [IKEV2IANA](https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml) for the latest values.
-#[derive(Clone,Copy,Debug,PartialEq)]
-#[repr(u16)]
-pub enum IkeTransformEncType {
-    DesIV64 = 1,
-    Des = 2,
-    TripleDes = 3,
-    Rc5 = 4,
-    Idea = 5,
-    Cast = 6,
-    Blowfish = 7,
-    TripleIdea = 8,
-    DesIV32 = 9,
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct IkeTransformEncType(pub u16);
+
+impl IkeTransformEncType {
+    // 0 is reserved
+    pub const ENCR_DES_IV64           : IkeTransformEncType = IkeTransformEncType(1);
+    pub const ENCR_DES                : IkeTransformEncType = IkeTransformEncType(2);
+    pub const ENCR_3DES               : IkeTransformEncType = IkeTransformEncType(3);
+    pub const ENCR_RC5                : IkeTransformEncType = IkeTransformEncType(4);
+    pub const ENCR_IDEA               : IkeTransformEncType = IkeTransformEncType(5);
+    pub const ENCR_CAST               : IkeTransformEncType = IkeTransformEncType(6);
+    pub const ENCR_BLOWFISH           : IkeTransformEncType = IkeTransformEncType(7);
+    pub const ENCR_3IDEA              : IkeTransformEncType = IkeTransformEncType(8);
+    pub const ENCR_DES_IV32           : IkeTransformEncType = IkeTransformEncType(9);
     // 10 is reserved
-    Null = 11,
-    AesCBC = 12,
-    AesCTR = 13,
-    AesCCM8 = 14,
-    AesCCM12 = 15,
-    AesCCM16 = 16,
+    pub const ENCR_NULL               : IkeTransformEncType = IkeTransformEncType(11);
+    pub const ENCR_AES_CBC            : IkeTransformEncType = IkeTransformEncType(12);
+    pub const ENCR_AES_CTR            : IkeTransformEncType = IkeTransformEncType(13);
+    pub const ENCR_AES_CCM_8          : IkeTransformEncType = IkeTransformEncType(14);
+    pub const ENCR_AES_CCM_12         : IkeTransformEncType = IkeTransformEncType(15);
+    pub const ENCR_AES_CCM_16         : IkeTransformEncType = IkeTransformEncType(16);
     // 17 is unassigned
-    AesGCM8 = 18,
-    AesGCM12 = 19,
-    AesGCM16 = 20,
-    NullAuthAesGCMMac = 21,
-    // 22 is reserved
-    CamelliaCBC = 23,
-    CamelliaCTR = 24,
-    CamelliaCCM8 = 25,
-    CamelliaCCM12 = 26,
-    CamelliaCCM16 = 27,
-    Chacha20Poly1305 = 28, // [RFC7634]
-}
+    pub const ENCR_AES_GCM_8          : IkeTransformEncType = IkeTransformEncType(18);
+    pub const ENCR_AES_GCM_12         : IkeTransformEncType = IkeTransformEncType(19);
+    pub const ENCR_AES_GCM_16         : IkeTransformEncType = IkeTransformEncType(20);
+    pub const ENCR_NULL_AUTH_AES_GMAC : IkeTransformEncType = IkeTransformEncType(21);
+    // 22 is reserved for IEEE P1619 XTS-AES
+    pub const ENCR_CAMELLIA_CBC       : IkeTransformEncType = IkeTransformEncType(23);
+    pub const ENCR_CAMELLIA_CTR       : IkeTransformEncType = IkeTransformEncType(24);
+    pub const ENCR_CAMELLIA_CCM_8     : IkeTransformEncType = IkeTransformEncType(25);
+    pub const ENCR_CAMELLIA_CCM_12    : IkeTransformEncType = IkeTransformEncType(26);
+    pub const ENCR_CAMELLIA_CCM_16    : IkeTransformEncType = IkeTransformEncType(27);
+    pub const ENCR_CHACHA20_POLY1305  : IkeTransformEncType = IkeTransformEncType(28); // [RFC7634]
 }
 
 impl IkeTransformEncType {
     pub fn is_aead(&self) -> bool {
         match *self {
-            IkeTransformEncType::AesCCM8 |
-            IkeTransformEncType::AesCCM12 |
-            IkeTransformEncType::AesCCM16 |
-            IkeTransformEncType::AesGCM8 |
-            IkeTransformEncType::AesGCM12 |
-            IkeTransformEncType::AesGCM16 |
-            IkeTransformEncType::CamelliaCCM8 |
-            IkeTransformEncType::CamelliaCCM12 |
-            IkeTransformEncType::CamelliaCCM16 |
-            IkeTransformEncType::Chacha20Poly1305 => true,
+            IkeTransformEncType::ENCR_AES_CCM_8 |
+            IkeTransformEncType::ENCR_AES_CCM_12 |
+            IkeTransformEncType::ENCR_AES_CCM_16 |
+            IkeTransformEncType::ENCR_AES_GCM_8 |
+            IkeTransformEncType::ENCR_AES_GCM_12 |
+            IkeTransformEncType::ENCR_AES_GCM_16 |
+            IkeTransformEncType::ENCR_CAMELLIA_CCM_8 |
+            IkeTransformEncType::ENCR_CAMELLIA_CCM_12 |
+            IkeTransformEncType::ENCR_CAMELLIA_CCM_16 |
+            IkeTransformEncType::ENCR_CHACHA20_POLY1305 => true,
             _ => false,
         }
     }
+
+    pub fn is_unassigned(&self) -> bool { self.0 >= 23 && self.0 <= 1023 }
+    pub fn is_private_use(&self) -> bool { self.0 >= 1024 }
 }
 
-enum_from_primitive! {
 /// Pseudo-Random Function values
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
 ///
 /// See also [IKEV2IANA](https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml) for the latest values.
-#[derive(Clone,Copy,Debug,PartialEq)]
-#[repr(u16)]
-pub enum IkeTransformPRFType {
-    Null = 0,
-    HmacMd5 = 1,
-    HmacSha1 = 2,
-    HmacTiger = 3,
-    Aes128XCBC = 4,
-    HmacSha256 = 5,
-    HmacSha384 = 6,
-    HmacSha512 = 7,
-    Aes128CMAC = 8,
-}
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct IkeTransformPRFType(pub u16);
+
+impl IkeTransformPRFType {
+    pub const PRF_NULL          : IkeTransformPRFType = IkeTransformPRFType(0);
+    pub const PRF_HMAC_MD5      : IkeTransformPRFType = IkeTransformPRFType(1);
+    pub const PRF_HMAC_SHA1     : IkeTransformPRFType = IkeTransformPRFType(2);
+    pub const PRF_HMAC_TIGER    : IkeTransformPRFType = IkeTransformPRFType(3);
+    pub const PRF_AES128_XCBC   : IkeTransformPRFType = IkeTransformPRFType(4);
+    pub const PRF_HMAC_SHA2_256 : IkeTransformPRFType = IkeTransformPRFType(5);
+    pub const PRF_HMAC_SHA2_384 : IkeTransformPRFType = IkeTransformPRFType(6);
+    pub const PRF_HMAC_SHA2_512 : IkeTransformPRFType = IkeTransformPRFType(7);
+    pub const PRF_AES128_CMAC   : IkeTransformPRFType = IkeTransformPRFType(8);
+
+    pub fn is_unassigned(&self) -> bool { self.0 >= 9 && self.0 <= 1023 }
+    pub fn is_private_use(&self) -> bool { self.0 >= 1024 }
 }
 
-enum_from_primitive! {
 /// Authentication / Integrity values
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
-#[derive(Clone,Copy,Debug,PartialEq)]
-#[repr(u16)]
-pub enum IkeTransformAuthType {
-    None = 0,
-    HmacMd5s96 = 1,
-    HmacSha1s96 = 2,
-    DesMac = 3,
-    KpdkMd5 = 4,
-    AesXCBC96 = 5,
-    HmacMd5s128 = 6,
-    HmacMd5s160 = 7,
-    AesCMAC96 = 8,
-    Aes128GMAC = 9,
-    Aes192GMAC = 10,
-    Aes256GMAC = 11,
-    HmacSha256s128 = 12,
-    HmacSha384s192 = 13,
-    HmacSha512s256 = 14,
-}
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct IkeTransformAuthType(pub u16);
+
+impl IkeTransformAuthType {
+    pub const NONE                   : IkeTransformAuthType = IkeTransformAuthType(0);
+    pub const AUTH_HMAC_MD5_96       : IkeTransformAuthType = IkeTransformAuthType(1);
+    pub const AUTH_HMAC_SHA1_96      : IkeTransformAuthType = IkeTransformAuthType(2);
+    pub const AUTH_DES_MAC           : IkeTransformAuthType = IkeTransformAuthType(3);
+    pub const AUTH_KPDK_MD5          : IkeTransformAuthType = IkeTransformAuthType(4);
+    pub const AUTH_AES_XCBC_96       : IkeTransformAuthType = IkeTransformAuthType(5);
+    pub const AUTH_HMAC_MD5_128      : IkeTransformAuthType = IkeTransformAuthType(6);
+    pub const AUTH_HMAC_SHA1_160     : IkeTransformAuthType = IkeTransformAuthType(7);
+    pub const AUTH_AES_CMAC_96       : IkeTransformAuthType = IkeTransformAuthType(8);
+    pub const AUTH_AES_128_GMAC      : IkeTransformAuthType = IkeTransformAuthType(9);
+    pub const AUTH_AES_192_GMAC      : IkeTransformAuthType = IkeTransformAuthType(10);
+    pub const AUTH_AES_256_GMAC      : IkeTransformAuthType = IkeTransformAuthType(11);
+    pub const AUTH_HMAC_SHA2_256_128 : IkeTransformAuthType = IkeTransformAuthType(12);
+    pub const AUTH_HMAC_SHA2_384_192 : IkeTransformAuthType = IkeTransformAuthType(13);
+    pub const AUTH_HMAC_SHA2_512_256 : IkeTransformAuthType = IkeTransformAuthType(14);
+
+    pub fn is_unassigned(&self) -> bool { self.0 >= 15 && self.0 <= 1023 }
+    pub fn is_private_use(&self) -> bool { self.0 >= 1024 }
 }
 
-enum_from_primitive! {
 /// Diffie-Hellman values
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
 ///
 /// See also [IKEV2IANA](https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml) for the latest values.
-#[derive(Clone,Copy,Debug,PartialEq)]
-#[repr(u16)]
-pub enum IkeTransformDHType {
-    None = 0,
-    Modp768 = 1,
-    Modp1024 = 2,
-    Modp1536 = 5,
-    Modp2048 = 14,
-    Modp3072 = 15,
-    Modp4096 = 16,
-    Modp6144 = 17,
-    Modp8192 = 18,
-    Ecp256 = 19,
-    Ecp384 = 20,
-    Ecp521 = 21,
-    Modp1024s160 = 22,
-    Modp2048s224 = 23,
-    Modp2048s256 = 24,
-    Ecp192 = 25,
-    Ecp224 = 26,
-    BrainpoolP224r1 = 27,
-    BrainpoolP256r1 = 28,
-    BrainpoolP384r1 = 29,
-    BrainpoolP512r1 = 30,
-    Curve25519 = 31,
-    Curve448 = 32,
-}
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct IkeTransformDHType(pub u16);
+
+#[allow(non_upper_case_globals)]
+impl IkeTransformDHType {
+    pub const None            : IkeTransformDHType = IkeTransformDHType(0);
+    pub const Modp768         : IkeTransformDHType = IkeTransformDHType(1);
+    pub const Modp1024        : IkeTransformDHType = IkeTransformDHType(2);
+    pub const Modp1536        : IkeTransformDHType = IkeTransformDHType(5);
+    pub const Modp2048        : IkeTransformDHType = IkeTransformDHType(14);
+    pub const Modp3072        : IkeTransformDHType = IkeTransformDHType(15);
+    pub const Modp4096        : IkeTransformDHType = IkeTransformDHType(16);
+    pub const Modp6144        : IkeTransformDHType = IkeTransformDHType(17);
+    pub const Modp8192        : IkeTransformDHType = IkeTransformDHType(18);
+    pub const Ecp256          : IkeTransformDHType = IkeTransformDHType(19);
+    pub const Ecp384          : IkeTransformDHType = IkeTransformDHType(20);
+    pub const Ecp521          : IkeTransformDHType = IkeTransformDHType(21);
+    pub const Modp1024s160    : IkeTransformDHType = IkeTransformDHType(22);
+    pub const Modp2048s224    : IkeTransformDHType = IkeTransformDHType(23);
+    pub const Modp2048s256    : IkeTransformDHType = IkeTransformDHType(24);
+    pub const Ecp192          : IkeTransformDHType = IkeTransformDHType(25);
+    pub const Ecp224          : IkeTransformDHType = IkeTransformDHType(26);
+    pub const BrainpoolP224r1 : IkeTransformDHType = IkeTransformDHType(27);
+    pub const BrainpoolP256r1 : IkeTransformDHType = IkeTransformDHType(28);
+    pub const BrainpoolP384r1 : IkeTransformDHType = IkeTransformDHType(29);
+    pub const BrainpoolP512r1 : IkeTransformDHType = IkeTransformDHType(30);
+    pub const Curve25519      : IkeTransformDHType = IkeTransformDHType(31);
+    pub const Curve448        : IkeTransformDHType = IkeTransformDHType(32);
+
+    pub fn is_unassigned(&self) -> bool { self.0 >= 15 && self.0 <= 1023 }
+    pub fn is_private_use(&self) -> bool { self.0 >= 1024 }
 }
 
-enum_from_primitive! {
 /// Extended Sequence Number values
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
-#[derive(Clone,Copy,Debug,PartialEq)]
-#[repr(u16)]
-pub enum IkeTransformESNType {
-    NoESN = 0,
-    ESN = 1,
-}
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct IkeTransformESNType(pub u16);
+
+#[allow(non_upper_case_globals)]
+impl IkeTransformESNType {
+    pub const NoESN : IkeTransformESNType = IkeTransformESNType(0);
+    pub const ESN   : IkeTransformESNType = IkeTransformESNType(1);
 }
 
 /// Raw representation of a transform (cryptographic algorithm) and parameters
@@ -205,34 +214,19 @@ impl<'a> From<&'a IkeV2RawTransform<'a>> for IkeV2Transform {
     fn from(r: &IkeV2RawTransform) -> IkeV2Transform {
         match r.transform_type {
             IkeTransformType::EncryptionAlgorithm => {
-                match IkeTransformEncType::from_u16(r.transform_id) {
-                    Some(x) => IkeV2Transform::Encryption(x),
-                    _       => IkeV2Transform::Unknown(r.transform_type,r.transform_id),
-                }
+                IkeV2Transform::Encryption(IkeTransformEncType(r.transform_id))
             },
             IkeTransformType::PseudoRandomFunction => {
-                match IkeTransformPRFType::from_u16(r.transform_id) {
-                    Some(x) => IkeV2Transform::PRF(x),
-                    _       => IkeV2Transform::Unknown(r.transform_type,r.transform_id),
-                }
+                IkeV2Transform::PRF(IkeTransformPRFType(r.transform_id))
             },
             IkeTransformType::IntegrityAlgorithm => {
-                match IkeTransformAuthType::from_u16(r.transform_id) {
-                    Some(x) => IkeV2Transform::Auth(x),
-                    _       => IkeV2Transform::Unknown(r.transform_type,r.transform_id),
-                }
+                IkeV2Transform::Auth(IkeTransformAuthType(r.transform_id))
             },
             IkeTransformType::DiffieHellmanGroup => {
-                match IkeTransformDHType::from_u16(r.transform_id) {
-                    Some(x) => IkeV2Transform::DH(x),
-                    _       => IkeV2Transform::Unknown(r.transform_type,r.transform_id),
-                }
+                IkeV2Transform::DH(IkeTransformDHType(r.transform_id))
             },
             IkeTransformType::ExtendedSequenceNumbers => {
-                match IkeTransformESNType::from_u16(r.transform_id) {
-                    Some(x) => IkeV2Transform::ESN(x),
-                    _       => IkeV2Transform::Unknown(r.transform_type,r.transform_id),
-                }
+                IkeV2Transform::ESN(IkeTransformESNType(r.transform_id))
             },
             _ => IkeV2Transform::Unknown(r.transform_type,r.transform_id)
         }

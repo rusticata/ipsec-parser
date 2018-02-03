@@ -21,7 +21,6 @@ include = [
 
 [dependencies]
 nom = "^3"
-enum_primitive = "0.1.0"
 rusticata-macros = "0.4.0"
 
 [badges]

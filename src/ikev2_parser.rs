@@ -122,7 +122,7 @@ pub fn parse_ikev2_payload_kex<'a>(i: &'a[u8], length: u16) -> IResult<&'a[u8],I
         >> (
             IkeV2PayloadContent::KE(
                 KeyExchangePayload{
-                    dh_group: dh,
+                    dh_group: IkeTransformDHType(dh),
                     reserved: reserved,
                     kex_data: data,
                 }

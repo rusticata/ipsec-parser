@@ -200,7 +200,7 @@ pub struct IkeV2Proposal<'a> {
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.4
 #[derive(Debug,PartialEq)]
 pub struct KeyExchangePayload<'a> {
-    pub dh_group: u16,
+    pub dh_group: IkeTransformDHType,
     pub reserved: u16,
     pub kex_data: &'a[u8],
 }
