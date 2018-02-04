@@ -1,9 +1,10 @@
 use std::net::{IpAddr,Ipv4Addr,Ipv6Addr};
+use std::fmt;
 use ikev2_transforms::*;
 use ikev2_notify::NotifyType;
 
 /// Payload exchange type: SA, Auth, CreateChildSA, etc.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct IkeExchangeType(pub u8);
 
 impl IkeExchangeType {
@@ -13,16 +14,39 @@ impl IkeExchangeType {
     pub const INFORMATIONAL   : IkeExchangeType = IkeExchangeType(37);
 }
 
+impl fmt::Debug for IkeExchangeType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.0 {
+            34 => f.write_str("IKE_SA_INIT"),
+            35 => f.write_str("IKE_AUTH"),
+            36 => f.write_str("CREATE_CHILD_SA"),
+            37 => f.write_str("INFORMATIONAL"),
+            n  => f.debug_tuple("IkeExchangeType").field(&n).finish(),
+        }
+    }
+}
+
 /// Protocol type: IKE, AH or ESP
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.1
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct ProtocolID(pub u8);
 
 impl ProtocolID {
     pub const IKE : ProtocolID = ProtocolID(1);
     pub const AH  : ProtocolID = ProtocolID(2);
     pub const ESP : ProtocolID = ProtocolID(3);
+}
+
+impl fmt::Debug for ProtocolID {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.0 {
+            1 => f.write_str("IKE"),
+            2 => f.write_str("AH"),
+            3 => f.write_str("ESP"),
+            n => f.debug_tuple("ProtocolID").field(&n).finish(),
+        }
+    }
 }
 
 pub const IKEV2_FLAG_INITIATOR : u8 = 0b1000;

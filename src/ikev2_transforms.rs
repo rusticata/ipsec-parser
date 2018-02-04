@@ -1,9 +1,10 @@
 use std::convert::From;
+use std::fmt;
 
 /// Transform (cryptographic algorithm) type
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct IkeTransformType(pub u8);
 
 #[allow(non_upper_case_globals)]
@@ -21,7 +22,7 @@ impl IkeTransformType {
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
 ///
 /// See also [IKEV2IANA](https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml) for the latest values.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct IkeTransformEncType(pub u16);
 
 impl IkeTransformEncType {
@@ -82,7 +83,7 @@ impl IkeTransformEncType {
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
 ///
 /// See also [IKEV2IANA](https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml) for the latest values.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct IkeTransformPRFType(pub u16);
 
 impl IkeTransformPRFType {
@@ -103,7 +104,7 @@ impl IkeTransformPRFType {
 /// Authentication / Integrity values
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct IkeTransformAuthType(pub u16);
 
 impl IkeTransformAuthType {
@@ -132,7 +133,7 @@ impl IkeTransformAuthType {
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
 ///
 /// See also [IKEV2IANA](https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml) for the latest values.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct IkeTransformDHType(pub u16);
 
 #[allow(non_upper_case_globals)]
@@ -168,7 +169,7 @@ impl IkeTransformDHType {
 /// Extended Sequence Number values
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.2
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct IkeTransformESNType(pub u16);
 
 #[allow(non_upper_case_globals)]
@@ -239,3 +240,129 @@ impl<'a> From<IkeV2RawTransform<'a>> for IkeV2Transform {
     }
 }
 
+impl fmt::Debug for IkeTransformType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.0 {
+            1 => f.write_str("EncryptionAlgorithm"),
+            2 => f.write_str("PseudoRandomFunction"),
+            3 => f.write_str("IntegrityAlgorithm"),
+            4 => f.write_str("DiffieHellmanGroup"),
+            5 => f.write_str("ExtendedSequenceNumbers"),
+            n => f.debug_tuple("IkeTransformType").field(&n).finish(),
+        }
+    }
+}
+
+impl fmt::Debug for IkeTransformEncType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.0 {
+            1  => f.write_str("ENCR_DES_IV64"),
+            2  => f.write_str("ENCR_DES"),
+            3  => f.write_str("ENCR_3DES"),
+            4  => f.write_str("ENCR_RC5"),
+            5  => f.write_str("ENCR_IDEA"),
+            6  => f.write_str("ENCR_CAST"),
+            7  => f.write_str("ENCR_BLOWFISH"),
+            8  => f.write_str("ENCR_3IDEA"),
+            9  => f.write_str("ENCR_DES_IV32"),
+            11 => f.write_str("ENCR_NULL"),
+            12 => f.write_str("ENCR_AES_CBC"),
+            13 => f.write_str("ENCR_AES_CTR"),
+            14 => f.write_str("ENCR_AES_CCM_8"),
+            15 => f.write_str("ENCR_AES_CCM_12"),
+            16 => f.write_str("ENCR_AES_CCM_16"),
+            18 => f.write_str("ENCR_AES_GCM_8"),
+            19 => f.write_str("ENCR_AES_GCM_12"),
+            20 => f.write_str("ENCR_AES_GCM_16"),
+            21 => f.write_str("ENCR_NULL_AUTH_AES_GMAC"),
+            23 => f.write_str("ENCR_CAMELLIA_CBC"),
+            24 => f.write_str("ENCR_CAMELLIA_CTR"),
+            25 => f.write_str("ENCR_CAMELLIA_CCM_8"),
+            26 => f.write_str("ENCR_CAMELLIA_CCM_12"),
+            27 => f.write_str("ENCR_CAMELLIA_CCM_16"),
+            28 => f.write_str("ENCR_CHACHA20_POLY1305"),
+            n  => f.debug_tuple("IkeTransformEncType").field(&n).finish(),
+        }
+    }
+}
+
+impl fmt::Debug for IkeTransformPRFType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.0 {
+            0  => f.write_str("Null"),
+            1  => f.write_str("PRF_HMAC_MD5"),
+            2  => f.write_str("PRF_HMAC_SHA1"),
+            3  => f.write_str("PRF_HMAC_TIGER"),
+            4  => f.write_str("PRF_AES128_XCBC"),
+            5  => f.write_str("PRF_HMAC_SHA2_256"),
+            6  => f.write_str("PRF_HMAC_SHA2_384"),
+            7  => f.write_str("PRF_HMAC_SHA2_512"),
+            8  => f.write_str("PRF_AES128_CMAC"),
+            n  => f.debug_tuple("IkeTransformPRFType").field(&n).finish(),
+        }
+    }
+}
+
+impl fmt::Debug for IkeTransformAuthType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.0 {
+            0  => f.write_str("NONE"),
+            1  => f.write_str("AUTH_HMAC_MD5_96"),
+            2  => f.write_str("AUTH_HMAC_SHA1_96"),
+            3  => f.write_str("AUTH_DES_MAC"),
+            4  => f.write_str("AUTH_KPDK_MD5"),
+            5  => f.write_str("AUTH_AES_XCBC_96"),
+            6  => f.write_str("AUTH_HMAC_MD5_128"),
+            7  => f.write_str("AUTH_HMAC_SHA1_128"),
+            8  => f.write_str("AUTH_AES_CMAC_96"),
+            9  => f.write_str("AUTH_AES_128_GMAC"),
+            10 => f.write_str("AUTH_AES_192_GMAC"),
+            11 => f.write_str("AUTH_AES_256_GMAC"),
+            12 => f.write_str("AUTH_HMAC_SHA2_256_128"),
+            13 => f.write_str("AUTH_HMAC_SHA2_384_192"),
+            14 => f.write_str("AUTH_HMAC_SHA2_512_256"),
+            n  => f.debug_tuple("IkeTransformAuthType").field(&n).finish(),
+        }
+    }
+}
+
+impl fmt::Debug for IkeTransformDHType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.0 {
+            0  => f.write_str("None"),
+            1  => f.write_str("768-bit MODP Group"),
+            2  => f.write_str("1024-bit MODP Group"),
+            5  => f.write_str("1536-bit MODP Group"),
+            14 => f.write_str("2048-bit MODP Group"),
+            15 => f.write_str("3072-bit MODP Group"),
+            16 => f.write_str("4096-bit MODP Group"),
+            17 => f.write_str("6144-bit MODP Group"),
+            18 => f.write_str("8192-bit MODP Group"),
+            19 => f.write_str("256-bit random ECP group"),
+            20 => f.write_str("384-bit random ECP group"),
+            21 => f.write_str("521-bit random ECP group"),
+            22 => f.write_str("1024-bit MODP Group with 160-bit Prime Order Subgroup"),
+            23 => f.write_str("2048-bit MODP Group with 224-bit Prime Order Subgroup"),
+            24 => f.write_str("2048-bit MODP Group with 256-bit Prime Order Subgroup"),
+            25 => f.write_str("192-bit Random ECP Group"),
+            26 => f.write_str("224-bit Random ECP Group"),
+            27 => f.write_str("brainpoolP224r1"),
+            28 => f.write_str("brainpoolP256r1"),
+            29 => f.write_str("brainpoolP384r1"),
+            30 => f.write_str("brainpoolP512r1"),
+            31 => f.write_str("Curve25519"),
+            32 => f.write_str("Curve448"),
+            n  => f.debug_tuple("IkeTransformDHType").field(&n).finish(),
+        }
+    }
+}
+
+impl fmt::Debug for IkeTransformESNType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.0 {
+            0 => f.write_str("NoESN"),
+            1 => f.write_str("ESN"),
+            n => f.debug_tuple("IkeTransformESNType").field(&n).finish(),
+        }
+    }
+}
