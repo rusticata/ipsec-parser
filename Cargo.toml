@@ -6,7 +6,7 @@ homepage = "https://github.com/rusticata/ipsec-parser"
 repository = "https://github.com/rusticata/ipsec-parser.git"
 documentation = "https://docs.rs/ipsec-parser"
 name = "ipsec-parser"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Pierre Chifflier <chifflier@wzdftpd.net>"]
 categories = ["parsing"]
 

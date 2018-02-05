@@ -6,9 +6,24 @@
 
 ## Overview
 
-ipsec-parser is a parser for the IPsec protocol.
+ipsec-parser is a parser for the IPsec protocols: IKEv2, and reading the envelope of ESP encapsulated messages.
 
-For the moment, only a subset of IKEv2 is supported.
+This parser provides the base functions to read and analyze messages, but does not handle the interpretation of messages.
+
+It cannot serialize messages, though this may be added later using the
+[cookie-factory](https://crates.io/cookie-factory) crate.
+
+For details and examples, see the [documentation](https://docs.rs/ipsec-parser/)
+
+## Rusticata
+
+This parser is part of the [rusticata](https://github.com/rusticata) project.
+The goal of this project is to provide **safe** parsers, that can be used in other projects.
+
+Testing of the parser is done manually, and also using unit tests and
+[cargo-fuzz](https://github.com/rust-fuzz/cargo-fuzz). Please fill a bugreport if you find any issue.
+
+Feel free to contribute: tests, feedback, doc, suggestions (or code) of new parsers etc. are welcome.
 
 ## License
 
