@@ -1,9 +1,21 @@
-//! IKEv2 parser
+//! # IPsec parsers
+//!
+//! This crate contains several parsers using for IPsec. The most useful is the IKEv2 parser.
+//!
+//! ESP is supported, but only to read the envelope of the payload.
+//!
+//! Encapsulated ESP is supported, to differentiate between IKE and ESP headers.
+//!
+//! # IKEv2 parser
+//!
 //! An IKEv2 (RFC7296) parser, implemented with the [nom](https://github.com/Geal/nom)
 //! parser combinator framework.
 //!
 //! The code is available on [Github](https://github.com/rusticata/ipsec-parser)
 //! and is part of the [Rusticata](https://github.com/rusticata) project.
+//!
+//! To parse an IKE packet, first read the header using `parse_ikev2_header`, then use the type
+//! from the header to parse the remaining part:
 //!
 //!
 //! ```rust,no_run
@@ -59,3 +71,6 @@ pub use ikev2_parser::*;
 
 mod ikev2_debug;
 pub use ikev2_debug::*;
+
+mod esp;
+pub use esp::*;
