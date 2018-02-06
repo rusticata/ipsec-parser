@@ -100,7 +100,7 @@ pub struct IkeV2Header<'a> {
 }
 
 /// Payload type
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct IkePayloadType(pub u8);
 
 #[allow(non_upper_case_globals)]
@@ -122,6 +122,31 @@ impl IkePayloadType {
     pub const EncryptedAndAuthenticated : IkePayloadType = IkePayloadType(46);
     pub const Configuration             : IkePayloadType = IkePayloadType(47);
     pub const ExtensibleAuthentication  : IkePayloadType = IkePayloadType(48);
+}
+
+impl fmt::Debug for IkePayloadType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.0 {
+            0  => f.write_str("NoNextPayload"),
+            33 => f.write_str("SecurityAssociation"),
+            34 => f.write_str("KeyExchange"),
+            35 => f.write_str("IdentInitiator"),
+            36 => f.write_str("IdentResponder"),
+            37 => f.write_str("Certificate"),
+            38 => f.write_str("CertificateRequest"),
+            39 => f.write_str("Authentication"),
+            40 => f.write_str("Nonce"),
+            41 => f.write_str("Notify"),
+            42 => f.write_str("Delete"),
+            43 => f.write_str("VendorID"),
+            44 => f.write_str("TrafficSelectorInitiator"),
+            45 => f.write_str("TrafficSelectorResponder"),
+            46 => f.write_str("EncryptedAndAuthenticated"),
+            47 => f.write_str("Configuration"),
+            48 => f.write_str("ExtensibleAuthentication"),
+            n  => f.debug_tuple("IkePayloadType").field(&n).finish(),
+        }
+    }
 }
 
 /// Generic (unparsed payload)
