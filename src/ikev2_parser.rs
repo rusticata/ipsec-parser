@@ -5,8 +5,8 @@ use ikev2_notify::NotifyType;
 
 named!(pub parse_ikev2_header<IkeV2Header>,
     do_parse!(
-           init_spi: take!(8)
-        >> resp_spi: take!(8)
+           init_spi: be_u64
+        >> resp_spi: be_u64
         >> np: be_u8
         >> vers: bits!(
              tuple!(take_bits!(u8,4),take_bits!(u8,4))
@@ -440,8 +440,8 @@ fn test_ikev2_init_req() {
     let empty = &b""[..];
     let bytes = &IKEV2_INIT_REQ[0..28];
     let expected = IResult::Done(empty,IkeV2Header{
-        init_spi: &bytes[0..8],
-        resp_spi: &bytes[8..16],
+        init_spi: 0x01f8c3d4bb773f2f,
+        resp_spi: 0x0,
         next_payload: IkePayloadType::SecurityAssociation,
         maj_ver: 2,
         min_ver: 0,

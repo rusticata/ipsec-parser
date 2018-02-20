@@ -15,6 +15,12 @@ It cannot serialize messages, though this may be added later using the
 
 For details and examples, see the [documentation](https://docs.rs/ipsec-parser/)
 
+## Changelog
+
+Release 0.3.0
+
+* `init_spi` and `resp_spi` fields have been changed from `&[u8]` to `u64`
+
 ## Rusticata
 
 This parser is part of the [rusticata](https://github.com/rusticata) project.

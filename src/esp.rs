@@ -18,7 +18,7 @@ pub struct ESPHeader<'a> {
 #[derive(Debug)]
 pub enum ESPData<'a> {
     ESP(ESPHeader<'a>),
-    IKE(IkeV2Header<'a>),
+    IKE(IkeV2Header),
 }
 
 
