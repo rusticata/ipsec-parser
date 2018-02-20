@@ -86,7 +86,7 @@ pub const IKEV2_FLAG_RESPONSE  : u8 = 0b100000;
 /// "network byte order").
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.1
-#[derive(Debug,PartialEq)]
+#[derive(Clone, Debug,PartialEq)]
 pub struct IkeV2Header {
     pub init_spi: u64,
     pub resp_spi: u64,
