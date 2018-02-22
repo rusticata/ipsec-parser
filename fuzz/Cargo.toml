@@ -22,7 +22,7 @@ members = ["."]
 
 [[bin]]
 name = "fuzzer_ikev2_payload_sa"
-path = "fuzzers/fuzzer_ikev2_payload_sa.rs"
+path = "fuzz_targets/fuzzer_ikev2_payload_sa.rs"
 
 [[bin]]
 name = "fuzzer_ikev2_payload_list"
