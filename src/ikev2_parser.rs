@@ -31,8 +31,9 @@ named!(pub parse_ikev2_header<IkeV2Header>,
     )
 );
 
-named!(pub parse_ikev2_payload_generic<IkeV2GenericPayload>,
+pub fn parse_ikev2_payload_generic(i: &[u8]) -> IResult<&[u8],IkeV2GenericPayload> {
     do_parse!(
+        i,
            np_type: be_u8
         >> b: bits!(
             tuple!(take_bits!(u8,1),take_bits!(u8,7))
@@ -52,7 +53,7 @@ named!(pub parse_ikev2_payload_generic<IkeV2GenericPayload>,
             }
         )
     )
-);
+}
 
 named!(pub parse_ikev2_transform<IkeV2RawTransform>,
     do_parse!(
@@ -373,6 +374,9 @@ fn parse_ikev2_payload_list_fold<'a>(res_v: Result<Vec<IkeV2Payload<'a>>,&'stati
         Some(el) => el.hdr.next_payload_type,
         None => { return Err("next payload type"); },
     };
+    if p.hdr.payload_length < 4 {
+        return Err("p.hdr.payload_length");
+    }
     match parse_ikev2_payload_with_type(p.payload,p.hdr.payload_length-4,next_payload_type) {
         IResult::Done(rem,p2) => {
             // println!("rem: {:?}",rem);
@@ -404,6 +408,19 @@ pub fn parse_ikev2_payload_list<'a>(i: &'a[u8], initial_type: IkePayloadType) ->
         parse_ikev2_payload_list_fold
     )
     // XXX should we split_first() the vector and return all but the first element ?
+}
+
+/// Parse an IKEv2 message
+///
+/// Parse the IKEv2 header and payload list
+pub fn parse_ikev2_message<'a>(i: &[u8]) -> IResult<&[u8],(IkeV2Header,Result<Vec<IkeV2Payload>,&'static str>)> {
+    do_parse!(
+        i,
+        hdr: parse_ikev2_header >>
+             error_if!(hdr.length < 28, ErrorKind::Custom(128) ) >>
+        msg: flat_map!(take!(hdr.length-28), call!(parse_ikev2_payload_list, hdr.next_payload)) >>
+        ( hdr,msg )
+    )
 }
 
 #[cfg(test)]
