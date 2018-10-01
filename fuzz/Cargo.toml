@@ -1,4 +1,3 @@
-
 [package]
 name = "ipsec-parser-fuzz"
 version = "0.0.1"
@@ -9,7 +8,7 @@ publish = false
 cargo-fuzz = true
 
 [dependencies]
-nom = "3.0"
+nom = "4.0"
 
 [dependencies.ipsec-parser]
 path = ".."
