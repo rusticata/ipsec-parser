@@ -108,12 +108,10 @@ named!(pub parse_ikev2_proposal<IkeV2Proposal>,
 );
 
 pub fn parse_ikev2_payload_sa<'a>(i: &'a[u8], _length: u16) -> IResult<&'a[u8],IkeV2PayloadContent<'a>> {
-    do_parse!(
+    map!(
         i,
-
-        v: many1!(complete!(parse_ikev2_proposal))
-
-        >> (IkeV2PayloadContent::SA(v))
+        many1!(complete!(parse_ikev2_proposal)),
+        |v| IkeV2PayloadContent::SA(v)
     )
 }
 
