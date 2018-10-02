@@ -30,9 +30,9 @@
 //! fn test_ikev2_init_resp() {
 //!     let bytes = IKEV2_INIT_RESP;
 //!     match parse_ikev2_header(&bytes) {
-//!         IResult::Done(rem, ref hdr) => {
+//!         Ok( (rem, ref hdr) ) => {
 //!             match parse_ikev2_payload_list(rem,hdr.next_payload) {
-//!                 IResult::Done(_, Ok(ref p)) => {
+//!                 Ok( (_, Ok(ref p)) ) => {
 //!                     // p is a list of payloads
 //!                     // first one is always dummy
 //!                     assert!(p.len() > 0);

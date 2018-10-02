@@ -30,11 +30,10 @@ pub enum ESPData<'a> {
 ///
 /// *Note: input is entirely consumed*
 pub fn parse_esp_encapsulated<'a>(i: &'a[u8]) -> IResult<&'a[u8],ESPData<'a>> {
-    match peek!(i, be_u32) {
-        IResult::Done(_,0)       => parse_ikev2_header(i).map(|x| ESPData::IKE(x)),
-        IResult::Done(_,_)       => parse_esp_header(i).map(|x| ESPData::ESP(x)),
-        IResult::Incomplete(inc) => IResult::Incomplete(inc),
-        IResult::Error(err)      => IResult::Error(err),
+    if peek!(i, be_u32)?.1 == 0 {
+        parse_ikev2_header(i).map(|x| (x.0, ESPData::IKE(x.1)))
+    } else {
+        parse_esp_header(i).map(|x| (x.0, ESPData::ESP(x.1)))
     }
 }
 
