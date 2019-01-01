@@ -10,22 +10,30 @@ use crate::ikev2_transforms::*;
 impl<'a> fmt::Debug for IkeV2RawTransform<'a> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let (tf_type, tf_id) = match self.transform_type {
-            IkeTransformType::EncryptionAlgorithm => {
-                ("EncryptionAlgorithm".to_string(),format!("{:?}", self.transform_id))
-            },
-            IkeTransformType::PseudoRandomFunction => {
-                ("PseudoRandomFunction".to_string(),format!("{:?}", self.transform_id))
-            },
-            IkeTransformType::IntegrityAlgorithm => {
-                ("IntegrityAlgorithm".to_string(),format!("{:?}", self.transform_id))
-            },
-            IkeTransformType::DiffieHellmanGroup => {
-                ("DiffieHellmanGroup".to_string(),format!("{:?}", self.transform_id))
-            },
-            IkeTransformType::ExtendedSequenceNumbers => {
-                ("ExtendedSequenceNumbers".to_string(),format!("{:?}", self.transform_id))
-            },
-            _    => (format!("<Unknown transform type {}>", self.transform_type.0),"".to_string()),
+            IkeTransformType::EncryptionAlgorithm => (
+                "EncryptionAlgorithm".to_string(),
+                format!("{:?}", self.transform_id),
+            ),
+            IkeTransformType::PseudoRandomFunction => (
+                "PseudoRandomFunction".to_string(),
+                format!("{:?}", self.transform_id),
+            ),
+            IkeTransformType::IntegrityAlgorithm => (
+                "IntegrityAlgorithm".to_string(),
+                format!("{:?}", self.transform_id),
+            ),
+            IkeTransformType::DiffieHellmanGroup => (
+                "DiffieHellmanGroup".to_string(),
+                format!("{:?}", self.transform_id),
+            ),
+            IkeTransformType::ExtendedSequenceNumbers => (
+                "ExtendedSequenceNumbers".to_string(),
+                format!("{:?}", self.transform_id),
+            ),
+            _ => (
+                format!("<Unknown transform type {}>", self.transform_type.0),
+                "".to_string(),
+            ),
         };
         fmt.debug_struct("IkeV2RawTransform")
             .field("last", &self.last)
@@ -44,7 +52,7 @@ impl<'a> fmt::Debug for IkeV2RawTransform<'a> {
 impl<'a> fmt::Debug for NoncePayload<'a> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.debug_struct("NoncePayload")
-            .field("nonce_data", &HexSlice{d:self.nonce_data})
+            .field("nonce_data", &HexSlice { d: self.nonce_data })
             .finish()
     }
 }
@@ -56,7 +64,7 @@ impl<'a> fmt::Debug for NotifyPayload<'a> {
             .field("spi_size", &self.spi_size)
             .field("notify_type", &self.notify_type)
             .field("spi", &self.spi)
-            .field("notify_data", &self.notify_data.map(|o|{HexSlice{d:o}}))
+            .field("notify_data", &self.notify_data.map(|o| HexSlice { d: o }))
             .finish()
     }
 }

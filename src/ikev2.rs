@@ -1,17 +1,17 @@
-use std::net::{IpAddr,Ipv4Addr,Ipv6Addr};
-use std::fmt;
-use crate::ikev2_transforms::*;
 use crate::ikev2_notify::NotifyType;
+use crate::ikev2_transforms::*;
+use std::fmt;
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 /// Payload exchange type: SA, Auth, CreateChildSA, etc.
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct IkeExchangeType(pub u8);
 
 impl IkeExchangeType {
-    pub const IKE_SA_INIT     : IkeExchangeType = IkeExchangeType(34);
-    pub const IKE_AUTH        : IkeExchangeType = IkeExchangeType(35);
-    pub const CREATE_CHILD_SA : IkeExchangeType = IkeExchangeType(36);
-    pub const INFORMATIONAL   : IkeExchangeType = IkeExchangeType(37);
+    pub const IKE_SA_INIT: IkeExchangeType = IkeExchangeType(34);
+    pub const IKE_AUTH: IkeExchangeType = IkeExchangeType(35);
+    pub const CREATE_CHILD_SA: IkeExchangeType = IkeExchangeType(36);
+    pub const INFORMATIONAL: IkeExchangeType = IkeExchangeType(37);
 }
 
 impl fmt::Debug for IkeExchangeType {
@@ -21,7 +21,7 @@ impl fmt::Debug for IkeExchangeType {
             35 => f.write_str("IKE_AUTH"),
             36 => f.write_str("CREATE_CHILD_SA"),
             37 => f.write_str("INFORMATIONAL"),
-            n  => f.debug_tuple("IkeExchangeType").field(&n).finish(),
+            n => f.debug_tuple("IkeExchangeType").field(&n).finish(),
         }
     }
 }
@@ -33,9 +33,9 @@ impl fmt::Debug for IkeExchangeType {
 pub struct ProtocolID(pub u8);
 
 impl ProtocolID {
-    pub const IKE : ProtocolID = ProtocolID(1);
-    pub const AH  : ProtocolID = ProtocolID(2);
-    pub const ESP : ProtocolID = ProtocolID(3);
+    pub const IKE: ProtocolID = ProtocolID(1);
+    pub const AH: ProtocolID = ProtocolID(2);
+    pub const ESP: ProtocolID = ProtocolID(3);
 }
 
 impl fmt::Debug for ProtocolID {
@@ -49,9 +49,9 @@ impl fmt::Debug for ProtocolID {
     }
 }
 
-pub const IKEV2_FLAG_INITIATOR : u8 = 0b1000;
-pub const IKEV2_FLAG_VERSION   : u8 = 0b10000;
-pub const IKEV2_FLAG_RESPONSE  : u8 = 0b100000;
+pub const IKEV2_FLAG_INITIATOR: u8 = 0b1000;
+pub const IKEV2_FLAG_VERSION: u8 = 0b10000;
+pub const IKEV2_FLAG_RESPONSE: u8 = 0b100000;
 
 /// The IKE Header
 ///
@@ -86,7 +86,7 @@ pub const IKEV2_FLAG_RESPONSE  : u8 = 0b100000;
 /// "network byte order").
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.1
-#[derive(Clone, Debug,PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct IkeV2Header {
     pub init_spi: u64,
     pub resp_spi: u64,
@@ -105,29 +105,29 @@ pub struct IkePayloadType(pub u8);
 
 #[allow(non_upper_case_globals)]
 impl IkePayloadType {
-    pub const NoNextPayload             : IkePayloadType = IkePayloadType(0);
-    pub const SecurityAssociation       : IkePayloadType = IkePayloadType(33);
-    pub const KeyExchange               : IkePayloadType = IkePayloadType(34);
-    pub const IdentInitiator            : IkePayloadType = IkePayloadType(35);
-    pub const IdentResponder            : IkePayloadType = IkePayloadType(36);
-    pub const Certificate               : IkePayloadType = IkePayloadType(37);
-    pub const CertificateRequest        : IkePayloadType = IkePayloadType(38);
-    pub const Authentication            : IkePayloadType = IkePayloadType(39);
-    pub const Nonce                     : IkePayloadType = IkePayloadType(40);
-    pub const Notify                    : IkePayloadType = IkePayloadType(41);
-    pub const Delete                    : IkePayloadType = IkePayloadType(42);
-    pub const VendorID                  : IkePayloadType = IkePayloadType(43);
-    pub const TrafficSelectorInitiator  : IkePayloadType = IkePayloadType(44);
-    pub const TrafficSelectorResponder  : IkePayloadType = IkePayloadType(45);
-    pub const EncryptedAndAuthenticated : IkePayloadType = IkePayloadType(46);
-    pub const Configuration             : IkePayloadType = IkePayloadType(47);
-    pub const ExtensibleAuthentication  : IkePayloadType = IkePayloadType(48);
+    pub const NoNextPayload: IkePayloadType = IkePayloadType(0);
+    pub const SecurityAssociation: IkePayloadType = IkePayloadType(33);
+    pub const KeyExchange: IkePayloadType = IkePayloadType(34);
+    pub const IdentInitiator: IkePayloadType = IkePayloadType(35);
+    pub const IdentResponder: IkePayloadType = IkePayloadType(36);
+    pub const Certificate: IkePayloadType = IkePayloadType(37);
+    pub const CertificateRequest: IkePayloadType = IkePayloadType(38);
+    pub const Authentication: IkePayloadType = IkePayloadType(39);
+    pub const Nonce: IkePayloadType = IkePayloadType(40);
+    pub const Notify: IkePayloadType = IkePayloadType(41);
+    pub const Delete: IkePayloadType = IkePayloadType(42);
+    pub const VendorID: IkePayloadType = IkePayloadType(43);
+    pub const TrafficSelectorInitiator: IkePayloadType = IkePayloadType(44);
+    pub const TrafficSelectorResponder: IkePayloadType = IkePayloadType(45);
+    pub const EncryptedAndAuthenticated: IkePayloadType = IkePayloadType(46);
+    pub const Configuration: IkePayloadType = IkePayloadType(47);
+    pub const ExtensibleAuthentication: IkePayloadType = IkePayloadType(48);
 }
 
 impl fmt::Debug for IkePayloadType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.0 {
-            0  => f.write_str("NoNextPayload"),
+            0 => f.write_str("NoNextPayload"),
             33 => f.write_str("SecurityAssociation"),
             34 => f.write_str("KeyExchange"),
             35 => f.write_str("IdentInitiator"),
@@ -144,7 +144,7 @@ impl fmt::Debug for IkePayloadType {
             46 => f.write_str("EncryptedAndAuthenticated"),
             47 => f.write_str("Configuration"),
             48 => f.write_str("ExtensibleAuthentication"),
-            n  => f.debug_tuple("IkePayloadType").field(&n).finish(),
+            n => f.debug_tuple("IkePayloadType").field(&n).finish(),
         }
     }
 }
@@ -152,10 +152,10 @@ impl fmt::Debug for IkePayloadType {
 /// Generic (unparsed payload)
 ///
 /// Defined in [RFC7296]
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct IkeV2GenericPayload<'a> {
     pub hdr: IkeV2PayloadHeader,
-    pub payload: &'a[u8],
+    pub payload: &'a [u8],
 }
 
 /// Ciphersuite Proposal
@@ -226,7 +226,7 @@ pub struct IkeV2GenericPayload<'a> {
 /// in the header of each transform.
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3.1
-#[derive(Clone,Debug,PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct IkeV2Proposal<'a> {
     pub last: u8,
     pub reserved: u8,
@@ -235,7 +235,7 @@ pub struct IkeV2Proposal<'a> {
     pub protocol_id: ProtocolID,
     pub spi_size: u8,
     pub num_transforms: u8,
-    pub spi: Option<&'a[u8]>,
+    pub spi: Option<&'a [u8]>,
     pub transforms: Vec<IkeV2RawTransform<'a>>,
 }
 
@@ -247,11 +247,11 @@ pub struct IkeV2Proposal<'a> {
 /// payload header followed by the Diffie-Hellman public value itself.
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.4
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct KeyExchangePayload<'a> {
     pub dh_group: IkeTransformDHType,
     pub reserved: u16,
-    pub kex_data: &'a[u8],
+    pub kex_data: &'a [u8],
 }
 
 /// Identification Payloads
@@ -268,12 +268,12 @@ pub struct KeyExchangePayload<'a> {
 /// data related to the other party.
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.5
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct IdentificationPayload<'a> {
     pub id_type: IdentificationType,
     pub reserved1: u8,
     pub reserved2: u16,
-    pub ident_data: &'a[u8],
+    pub ident_data: &'a [u8],
 }
 
 /// Type of Identification
@@ -282,29 +282,29 @@ pub struct IdentificationType(pub u8);
 
 impl IdentificationType {
     /// A single four (4) octet IPv4 address.
-    pub const ID_IPV4_ADDR   : IdentificationType = IdentificationType(1);
+    pub const ID_IPV4_ADDR: IdentificationType = IdentificationType(1);
     /// A fully-qualified domain name string.  An example of an ID_FQDN
     /// is "example.com".  The string MUST NOT contain any terminators
     /// (e.g., NULL, CR, etc.).  All characters in the ID_FQDN are ASCII;
     /// for an "internationalized domain name", the syntax is as defined
     /// in [IDNA], for example "xn--tmonesimerkki-bfbb.example.net".
-    pub const ID_FQDN        : IdentificationType = IdentificationType(2);
+    pub const ID_FQDN: IdentificationType = IdentificationType(2);
     /// A fully-qualified RFC 822 email address string.  An example of a
     /// ID_RFC822_ADDR is "jsmith@example.com".  The string MUST NOT
     /// contain any terminators.  Because of [EAI], implementations would
     /// be wise to treat this field as UTF-8 encoded text, not as
     /// pure ASCII.
-    pub const ID_RFC822_ADDR : IdentificationType = IdentificationType(3);
+    pub const ID_RFC822_ADDR: IdentificationType = IdentificationType(3);
     /// A single sixteen (16) octet IPv6 address.
-    pub const ID_IPV6_ADDR   : IdentificationType = IdentificationType(5);
+    pub const ID_IPV6_ADDR: IdentificationType = IdentificationType(5);
     /// The binary Distinguished Encoding Rules (DER) encoding of an ASN.1 X.500 Distinguished
     /// Name.
-    pub const ID_DER_ASN1_DN : IdentificationType = IdentificationType(9);
+    pub const ID_DER_ASN1_DN: IdentificationType = IdentificationType(9);
     /// The binary DER encoding of an ASN.1 X.509 GeneralName.
-    pub const ID_DER_ASN1_GN : IdentificationType = IdentificationType(10);
+    pub const ID_DER_ASN1_GN: IdentificationType = IdentificationType(10);
     /// An opaque octet stream that may be used to pass vendor-specific information necessary to do
     /// certain proprietary types of identification.
-    pub const ID_KEY_ID      : IdentificationType = IdentificationType(11);
+    pub const ID_KEY_ID: IdentificationType = IdentificationType(11);
 }
 
 /// Certificate Payload
@@ -321,10 +321,10 @@ impl IdentificationType {
 /// than certificates may be passed in this payload.
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.6
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct CertificatePayload<'a> {
     pub cert_encoding: CertificateEncoding,
-    pub cert_data: &'a[u8],
+    pub cert_data: &'a [u8],
 }
 
 /// Certificate Encoding
@@ -336,33 +336,33 @@ pub struct CertificateEncoding(pub u8);
 #[allow(non_upper_case_globals)]
 impl CertificateEncoding {
     /// PKCS #7 wrapped X.509 certificate
-    pub const Pkcs7_X509                  : CertificateEncoding = CertificateEncoding(1);
+    pub const Pkcs7_X509: CertificateEncoding = CertificateEncoding(1);
     /// PGP Certificate
-    pub const PgpCert                     : CertificateEncoding = CertificateEncoding(2);
+    pub const PgpCert: CertificateEncoding = CertificateEncoding(2);
     /// DNS Signed Key
-    pub const DnsKey                      : CertificateEncoding = CertificateEncoding(3);
+    pub const DnsKey: CertificateEncoding = CertificateEncoding(3);
     /// X.509 Certificate - Signature
-    pub const X509Sig                     : CertificateEncoding = CertificateEncoding(4);
+    pub const X509Sig: CertificateEncoding = CertificateEncoding(4);
     /// Kerberos Token
-    pub const Kerberos                    : CertificateEncoding = CertificateEncoding(6);
+    pub const Kerberos: CertificateEncoding = CertificateEncoding(6);
     /// Certificate Revocation List (CRL)
-    pub const Crl                         : CertificateEncoding = CertificateEncoding(7);
+    pub const Crl: CertificateEncoding = CertificateEncoding(7);
     /// Authority Revocation List (ARL)
-    pub const Arl                         : CertificateEncoding = CertificateEncoding(8);
+    pub const Arl: CertificateEncoding = CertificateEncoding(8);
     /// SPKI Certificate
-    pub const SpkiCert                    : CertificateEncoding = CertificateEncoding(9);
+    pub const SpkiCert: CertificateEncoding = CertificateEncoding(9);
     /// X.509 Certificate - Attribute
-    pub const X509CertAttr                : CertificateEncoding = CertificateEncoding(10);
+    pub const X509CertAttr: CertificateEncoding = CertificateEncoding(10);
     /// Deprecated (was Raw RSA Key)
-    pub const OldRsaKey                   : CertificateEncoding = CertificateEncoding(11);
+    pub const OldRsaKey: CertificateEncoding = CertificateEncoding(11);
     /// Hash and URL of X.509 certificate
-    pub const X509Cert_HashUrl            : CertificateEncoding = CertificateEncoding(12);
+    pub const X509Cert_HashUrl: CertificateEncoding = CertificateEncoding(12);
     /// Hash and URL of X.509 bundle
-    pub const X509Bundle_HashUrl          : CertificateEncoding = CertificateEncoding(13);
+    pub const X509Bundle_HashUrl: CertificateEncoding = CertificateEncoding(13);
     /// OCSP Content ([RFC4806](https://tools.ietf.org/html/rfc4806))
-    pub const OCSPContent                 : CertificateEncoding = CertificateEncoding(14);
+    pub const OCSPContent: CertificateEncoding = CertificateEncoding(14);
     /// Raw Public Key ([RFC7670](https://tools.ietf.org/html/rfc7670))
-    pub const RawPublicKey                : CertificateEncoding = CertificateEncoding(15);
+    pub const RawPublicKey: CertificateEncoding = CertificateEncoding(15);
 }
 
 /// Certificate Request Payload
@@ -374,10 +374,10 @@ impl CertificateEncoding {
 /// sender needs to get the certificate of the receiver.
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.7
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct CertificateRequestPayload<'a> {
     pub cert_encoding: CertificateEncoding,
-    pub ca_data: &'a[u8],
+    pub ca_data: &'a [u8],
 }
 
 /// Authentication Payload
@@ -386,10 +386,10 @@ pub struct CertificateRequestPayload<'a> {
 /// data used for authentication purposes.
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.8
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct AuthenticationPayload<'a> {
     pub auth_method: AuthenticationMethod,
-    pub auth_data: &'a[u8],
+    pub auth_data: &'a [u8],
 }
 
 /// Method of authentication used.
@@ -401,28 +401,27 @@ pub struct AuthenticationMethod(pub u8);
 #[allow(non_upper_case_globals)]
 impl AuthenticationMethod {
     /// RSA Digital Signature
-    pub const RsaSig          : AuthenticationMethod = AuthenticationMethod(1);
+    pub const RsaSig: AuthenticationMethod = AuthenticationMethod(1);
     /// Shared Key Message Integrity Code
-    pub const SharedKeyMIC    : AuthenticationMethod = AuthenticationMethod(2);
+    pub const SharedKeyMIC: AuthenticationMethod = AuthenticationMethod(2);
     /// DSS Digital Signature
-    pub const DssSig          : AuthenticationMethod = AuthenticationMethod(3);
+    pub const DssSig: AuthenticationMethod = AuthenticationMethod(3);
     /// ECDSA with SHA-256 on the P-256 curve
-    pub const EcdsaSha256P256 : AuthenticationMethod = AuthenticationMethod(9);
+    pub const EcdsaSha256P256: AuthenticationMethod = AuthenticationMethod(9);
     /// ECDSA with SHA-384 on the P-384 curve
-    pub const EcdsaSha384P384 : AuthenticationMethod = AuthenticationMethod(10);
+    pub const EcdsaSha384P384: AuthenticationMethod = AuthenticationMethod(10);
     /// ECDSA with SHA-512 on the P-512 curve
-    pub const EcdsaSha512P512 : AuthenticationMethod = AuthenticationMethod(11);
+    pub const EcdsaSha512P512: AuthenticationMethod = AuthenticationMethod(11);
     /// Generic Secure Password Authentication Method
-    pub const GenericPass     : AuthenticationMethod = AuthenticationMethod(12);
+    pub const GenericPass: AuthenticationMethod = AuthenticationMethod(12);
     /// NULL Authentication
-    pub const Null            : AuthenticationMethod = AuthenticationMethod(13);
+    pub const Null: AuthenticationMethod = AuthenticationMethod(13);
     /// Digital Signature
-    pub const DigitalSig      : AuthenticationMethod = AuthenticationMethod(14);
+    pub const DigitalSig: AuthenticationMethod = AuthenticationMethod(14);
 
     /// Test if value is in unassigned range
     pub fn is_unassigned(&self) -> bool {
-        (self.0 >= 4 && self.0 <= 8) ||
-        (self.0 >= 15 && self.0 <= 200)
+        (self.0 >= 4 && self.0 <= 8) || (self.0 >= 15 && self.0 <= 200)
     }
 
     /// Test if value is in private use range
@@ -430,7 +429,6 @@ impl AuthenticationMethod {
         self.0 >= 201
     }
 }
-
 
 /// Nonce Payload
 ///
@@ -441,7 +439,7 @@ impl AuthenticationMethod {
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.9
 #[derive(PartialEq)]
 pub struct NoncePayload<'a> {
-    pub nonce_data: &'a[u8],
+    pub nonce_data: &'a [u8],
 }
 
 /// Notify Payload
@@ -458,8 +456,8 @@ pub struct NotifyPayload<'a> {
     pub protocol_id: ProtocolID,
     pub spi_size: u8,
     pub notify_type: NotifyType,
-    pub spi: Option<&'a[u8]>,
-    pub notify_data: Option<&'a[u8]>,
+    pub spi: Option<&'a [u8]>,
+    pub notify_data: Option<&'a [u8]>,
 }
 
 /// Delete Payload
@@ -476,12 +474,12 @@ pub struct NotifyPayload<'a> {
 /// different protocol.
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.11
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct DeletePayload<'a> {
     pub protocol_id: ProtocolID,
     pub spi_size: u8,
     pub num_spi: u16,
-    pub spi: &'a[u8],
+    pub spi: &'a [u8],
 }
 
 /// Vendor ID Payload
@@ -514,9 +512,9 @@ pub struct DeletePayload<'a> {
 /// away.
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.12
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct VendorIDPayload<'a> {
-    pub vendor_id: &'a[u8],
+    pub vendor_id: &'a [u8],
 }
 
 /// Type of Traffic Selector
@@ -530,32 +528,32 @@ pub struct TSType(pub u8);
 #[allow(non_upper_case_globals)]
 impl TSType {
     /// A range of IPv4 addresses
-    pub const IPv4AddrRange : TSType = TSType(7);
+    pub const IPv4AddrRange: TSType = TSType(7);
     /// A range of IPv6 addresses
-    pub const IPv6AddrRange : TSType = TSType(8);
+    pub const IPv6AddrRange: TSType = TSType(8);
     /// Fibre Channel Traffic Selectors ([RFC4595](https://tools.ietf.org/html/rfc4595))
-    pub const FcAddrRange   : TSType = TSType(9);
+    pub const FcAddrRange: TSType = TSType(9);
 }
 
 /// Traffic Selector
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.13.1
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct TrafficSelector<'a> {
     pub ts_type: TSType,
     pub ip_proto_id: u8,
     pub sel_length: u16,
     pub start_port: u16,
     pub end_port: u16,
-    pub start_addr: &'a[u8],
-    pub end_addr: &'a[u8],
+    pub start_addr: &'a [u8],
+    pub end_addr: &'a [u8],
 }
 
-fn ipv4_from_slice(b:&[u8]) -> Ipv4Addr {
+fn ipv4_from_slice(b: &[u8]) -> Ipv4Addr {
     Ipv4Addr::new(b[0], b[1], b[2], b[3])
 }
 
-fn ipv6_from_slice(b:&[u8]) -> Ipv6Addr {
+fn ipv6_from_slice(b: &[u8]) -> Ipv6Addr {
     Ipv6Addr::new(
         (b[0] as u16) << 8 | (b[1] as u16),
         (b[2] as u16) << 8 | (b[3] as u16),
@@ -598,10 +596,10 @@ impl<'a> TrafficSelector<'a> {
 /// payload header followed by individual Traffic Selectors.
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.13
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct TrafficSelectorPayload<'a> {
     pub num_ts: u8,
-    pub reserved: &'a[u8], // 3 bytes
+    pub reserved: &'a [u8], // 3 bytes
     pub ts: Vec<TrafficSelector<'a>>,
 }
 
@@ -610,7 +608,7 @@ pub struct TrafficSelectorPayload<'a> {
 /// The content of an IKE message is one of the defined payloads.
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.2
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum IkeV2PayloadContent<'a> {
     SA(Vec<IkeV2Proposal<'a>>),
     KE(KeyExchangePayload<'a>),
@@ -626,7 +624,7 @@ pub enum IkeV2PayloadContent<'a> {
     TSi(TrafficSelectorPayload<'a>),
     TSr(TrafficSelectorPayload<'a>),
 
-    Unknown(&'a[u8]),
+    Unknown(&'a [u8]),
 
     Dummy,
 }
@@ -634,7 +632,7 @@ pub enum IkeV2PayloadContent<'a> {
 /// Generic Payload Header
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.2
-#[derive(Clone,Debug,PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct IkeV2PayloadHeader {
     pub next_payload_type: IkePayloadType,
     pub critical: bool,
@@ -645,7 +643,7 @@ pub struct IkeV2PayloadHeader {
 /// IKE Message Payload
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct IkeV2Payload<'a> {
     pub hdr: IkeV2PayloadHeader,
     pub content: IkeV2PayloadContent<'a>,
