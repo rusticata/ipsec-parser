@@ -17,7 +17,11 @@ For details and examples, see the [documentation](https://docs.rs/ipsec-parser/)
 
 ## Changelog
 
-Release 0.3.0
+### 0.4.0
+
+- Upgrade to nom 4
+
+### 0.3.0
 
 * Add function `parse_ikev2_message` to read header and payload list
 * `init_spi` and `resp_spi` fields have been changed from `&[u8]` to `u64`
