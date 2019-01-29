@@ -1,4 +1,5 @@
-use nom::{self, *};
+use nom;
+use nom::*;
 use ikev2::*;
 use ikev2_transforms::*;
 use ikev2_notify::NotifyType;
