@@ -17,6 +17,10 @@ For details and examples, see the [documentation](https://docs.rs/ipsec-parser/)
 
 ## Changelog
 
+### 0.4.1
+
+- o not use glob imports in `use` groups (compatibility with rust 1.24)
+
 ### 0.4.0
 
 - Upgrade to nom 4
