@@ -1,9 +1,10 @@
-extern crate nom;
 extern crate ipsec_parser;
+extern crate nom;
 
 mod ikev2 {
-use ipsec_parser::*;
+    use ipsec_parser::*;
 
+    #[rustfmt::skip]
 static IKEV2_MSG: &'static [u8] = &[
   0x00, 0x00, 0x00, 0x00, 0xbc, 0xa1, 0x93, 0x7a, 0x7c, 0x2f, 0xf5, 0xb9, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x21, 0x20, 0x22, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x2c,
@@ -26,68 +27,71 @@ static IKEV2_MSG: &'static [u8] = &[
   0xb7, 0x55, 0x8e, 0x0d, 0x82, 0x69, 0x79, 0x9c, 0x68, 0x00, 0x36, 0x2c, 0x46, 0xa0, 0xbf, 0x7b
 ];
 
-#[test]
-fn test_ipsec_ike_sa() {
-    let bytes = &IKEV2_MSG[4..32];
-    let ike_sa = &IKEV2_MSG[32..];
-    let expected = IkeV2Header{
-        init_spi: 0xbca1937a7c2ff5b9,
-        resp_spi: 0x0,
-        next_payload: IkePayloadType::SecurityAssociation,
-        maj_ver: 2,
-        min_ver: 0,
-        exch_type: IkeExchangeType::IKE_SA_INIT,
-        flags: 0x8,
-        msg_id: 0,
-        length: 300,
-    };
-    let (_, res) = parse_ikev2_header(&bytes).expect("failed to parse header");
-    // println!("{:?}",res);
-    assert_eq!(res, expected);
+    #[test]
+    fn test_ipsec_ike_sa() {
+        let bytes = &IKEV2_MSG[4..32];
+        let ike_sa = &IKEV2_MSG[32..];
+        let expected = IkeV2Header {
+            init_spi: 0xbca1937a7c2ff5b9,
+            resp_spi: 0x0,
+            next_payload: IkePayloadType::SecurityAssociation,
+            maj_ver: 2,
+            min_ver: 0,
+            exch_type: IkeExchangeType::IKE_SA_INIT,
+            flags: 0x8,
+            msg_id: 0,
+            length: 300,
+        };
+        let (_, res) = parse_ikev2_header(&bytes).expect("failed to parse header");
+        // println!("{:?}",res);
+        assert_eq!(res, expected);
 
-    let (_, hdr) = parse_ikev2_payload_generic(&ike_sa).expect("failed to parse payload");
-    // println!("{:?}",res_sa);
-    let (rem, sa) = parse_ikev2_payload_sa(hdr.payload,0).unwrap();
-    assert_eq!(rem.len(), 0);
-    match sa {
-        IkeV2PayloadContent::SA(ref sa_list) => {
-            assert_eq!(sa_list.len(),4);
-            // for sa in sa_list.iter() {
-            //     println!("sa: {:?}", sa);
-            // }
-            sa_list.iter().zip(&[3, 3, 4, 4]).for_each(|(a,b)|
-                assert_eq!(a.num_transforms, *b));
-            sa_list.iter().for_each(|a|
-                assert_eq!(a.transforms.len(), a.num_transforms as usize));
-        },
-        _ => assert!(false),
+        let (_, hdr) = parse_ikev2_payload_generic(&ike_sa).expect("failed to parse payload");
+        // println!("{:?}",res_sa);
+        let (rem, sa) = parse_ikev2_payload_sa(hdr.payload, 0).unwrap();
+        assert_eq!(rem.len(), 0);
+        match sa {
+            IkeV2PayloadContent::SA(ref sa_list) => {
+                assert_eq!(sa_list.len(), 4);
+                // for sa in sa_list.iter() {
+                //     println!("sa: {:?}", sa);
+                // }
+                sa_list
+                    .iter()
+                    .zip(&[3, 3, 4, 4])
+                    .for_each(|(a, b)| assert_eq!(a.num_transforms, *b));
+                sa_list
+                    .iter()
+                    .for_each(|a| assert_eq!(a.transforms.len(), a.num_transforms as usize));
+            }
+            _ => assert!(false),
+        }
     }
-}
 
-static IKEV2_INIT_REQ: &'static [u8] = include_bytes!("../assets/ike-sa-init-req.bin");
+    static IKEV2_INIT_REQ: &'static [u8] = include_bytes!("../assets/ike-sa-init-req.bin");
 
-#[test]
-fn test_ipsec_ike_message() {
-    let bytes = IKEV2_INIT_REQ;
-    let expected_header = IkeV2Header{
-        init_spi: 0x54c184961bc3fd77,
-        resp_spi: 0x0,
-        next_payload: IkePayloadType::SecurityAssociation,
-        maj_ver: 2,
-        min_ver: 0,
-        exch_type: IkeExchangeType::IKE_SA_INIT,
-        flags: 0x8,
-        msg_id: 0,
-        length: 256,
-    };
-    let (rem, (hdr, res_list)) = parse_ikev2_message(&bytes).expect("failed to parse header");
-    let list = res_list.expect("failed to parse payload");
-    assert_eq!(rem.len(),0);
-    assert_eq!(hdr, expected_header);
-    assert_eq!(list.len(),4);
-    for (a,b) in list.iter().zip(&[33, 34, 40, 0]) {
-        assert_eq!(a.hdr.next_payload_type, IkePayloadType(*b));
+    #[test]
+    fn test_ipsec_ike_message() {
+        let bytes = IKEV2_INIT_REQ;
+        let expected_header = IkeV2Header {
+            init_spi: 0x54c184961bc3fd77,
+            resp_spi: 0x0,
+            next_payload: IkePayloadType::SecurityAssociation,
+            maj_ver: 2,
+            min_ver: 0,
+            exch_type: IkeExchangeType::IKE_SA_INIT,
+            flags: 0x8,
+            msg_id: 0,
+            length: 256,
+        };
+        let (rem, (hdr, res_list)) = parse_ikev2_message(&bytes).expect("failed to parse header");
+        let list = res_list.expect("failed to parse payload");
+        assert_eq!(rem.len(), 0);
+        assert_eq!(hdr, expected_header);
+        assert_eq!(list.len(), 4);
+        for (a, b) in list.iter().zip(&[33, 34, 40, 0]) {
+            assert_eq!(a.hdr.next_payload_type, IkePayloadType(*b));
+        }
     }
-}
 
 } // mod ikev2

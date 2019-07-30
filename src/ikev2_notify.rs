@@ -37,6 +37,7 @@ use std::fmt;
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct NotifyType(pub u16);
 
+#[rustfmt::skip]
 impl NotifyType {
     // error types
     pub const UNSUPPORTED_CRITICAL_PAYLOAD  : NotifyType = NotifyType(1);
@@ -82,6 +83,7 @@ impl NotifyType {
 }
 
 impl fmt::Debug for NotifyType {
+    #[rustfmt::skip]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.0 {
             1     => f.write_str("UNSUPPORTED_CRITICAL_PAYLOAD"),

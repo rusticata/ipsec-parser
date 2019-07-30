@@ -8,6 +8,7 @@ use std::fmt;
 pub struct IkeTransformType(pub u8);
 
 #[allow(non_upper_case_globals)]
+#[rustfmt::skip]
 impl IkeTransformType {
     pub const EncryptionAlgorithm     : IkeTransformType = IkeTransformType(1);
     pub const PseudoRandomFunction    : IkeTransformType = IkeTransformType(2);
@@ -15,7 +16,6 @@ impl IkeTransformType {
     pub const DiffieHellmanGroup      : IkeTransformType = IkeTransformType(4);
     pub const ExtendedSequenceNumbers : IkeTransformType = IkeTransformType(5);
 }
-
 
 /// Encryption values
 ///
@@ -25,6 +25,7 @@ impl IkeTransformType {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct IkeTransformEncType(pub u16);
 
+#[rustfmt::skip]
 impl IkeTransformEncType {
     // 0 is reserved
     pub const ENCR_DES_IV64           : IkeTransformEncType = IkeTransformEncType(1);
@@ -60,22 +61,26 @@ impl IkeTransformEncType {
 impl IkeTransformEncType {
     pub fn is_aead(&self) -> bool {
         match *self {
-            IkeTransformEncType::ENCR_AES_CCM_8 |
-            IkeTransformEncType::ENCR_AES_CCM_12 |
-            IkeTransformEncType::ENCR_AES_CCM_16 |
-            IkeTransformEncType::ENCR_AES_GCM_8 |
-            IkeTransformEncType::ENCR_AES_GCM_12 |
-            IkeTransformEncType::ENCR_AES_GCM_16 |
-            IkeTransformEncType::ENCR_CAMELLIA_CCM_8 |
-            IkeTransformEncType::ENCR_CAMELLIA_CCM_12 |
-            IkeTransformEncType::ENCR_CAMELLIA_CCM_16 |
-            IkeTransformEncType::ENCR_CHACHA20_POLY1305 => true,
+            IkeTransformEncType::ENCR_AES_CCM_8
+            | IkeTransformEncType::ENCR_AES_CCM_12
+            | IkeTransformEncType::ENCR_AES_CCM_16
+            | IkeTransformEncType::ENCR_AES_GCM_8
+            | IkeTransformEncType::ENCR_AES_GCM_12
+            | IkeTransformEncType::ENCR_AES_GCM_16
+            | IkeTransformEncType::ENCR_CAMELLIA_CCM_8
+            | IkeTransformEncType::ENCR_CAMELLIA_CCM_12
+            | IkeTransformEncType::ENCR_CAMELLIA_CCM_16
+            | IkeTransformEncType::ENCR_CHACHA20_POLY1305 => true,
             _ => false,
         }
     }
 
-    pub fn is_unassigned(&self) -> bool { self.0 >= 23 && self.0 <= 1023 }
-    pub fn is_private_use(&self) -> bool { self.0 >= 1024 }
+    pub fn is_unassigned(&self) -> bool {
+        self.0 >= 23 && self.0 <= 1023
+    }
+    pub fn is_private_use(&self) -> bool {
+        self.0 >= 1024
+    }
 }
 
 /// Pseudo-Random Function values
@@ -86,6 +91,7 @@ impl IkeTransformEncType {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct IkeTransformPRFType(pub u16);
 
+#[rustfmt::skip]
 impl IkeTransformPRFType {
     pub const PRF_NULL          : IkeTransformPRFType = IkeTransformPRFType(0);
     pub const PRF_HMAC_MD5      : IkeTransformPRFType = IkeTransformPRFType(1);
@@ -107,6 +113,7 @@ impl IkeTransformPRFType {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct IkeTransformAuthType(pub u16);
 
+#[rustfmt::skip]
 impl IkeTransformAuthType {
     pub const NONE                   : IkeTransformAuthType = IkeTransformAuthType(0);
     pub const AUTH_HMAC_MD5_96       : IkeTransformAuthType = IkeTransformAuthType(1);
@@ -136,6 +143,7 @@ impl IkeTransformAuthType {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct IkeTransformDHType(pub u16);
 
+#[rustfmt::skip]
 #[allow(non_upper_case_globals)]
 impl IkeTransformDHType {
     pub const None            : IkeTransformDHType = IkeTransformDHType(0);
@@ -172,6 +180,7 @@ impl IkeTransformDHType {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct IkeTransformESNType(pub u16);
 
+#[rustfmt::skip]
 #[allow(non_upper_case_globals)]
 impl IkeTransformESNType {
     pub const NoESN : IkeTransformESNType = IkeTransformESNType(0);
@@ -183,7 +192,7 @@ impl IkeTransformESNType {
 /// Use the `From` method to convert it to a [`IkeV2Transform`](enum.IkeV2Transform.html)
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3
-#[derive(Clone,PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct IkeV2RawTransform<'a> {
     pub last: u8,
     pub reserved1: u8,
@@ -191,7 +200,7 @@ pub struct IkeV2RawTransform<'a> {
     pub transform_type: IkeTransformType,
     pub reserved2: u8,
     pub transform_id: u16,
-    pub attributes: Option<&'a[u8]>,
+    pub attributes: Option<&'a [u8]>,
 }
 
 /// IKEv2 Transform (cryptographic algorithm)
@@ -200,7 +209,7 @@ pub struct IkeV2RawTransform<'a> {
 /// etc.). To store the parameters, use [`IkeV2RawTransform`](struct.IkeV2RawTransform.html).
 ///
 /// Defined in [RFC7296](https://tools.ietf.org/html/rfc7296) section 3.3
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum IkeV2Transform {
     Encryption(IkeTransformEncType),
     PRF(IkeTransformPRFType),
@@ -208,7 +217,7 @@ pub enum IkeV2Transform {
     DH(IkeTransformDHType),
     ESN(IkeTransformESNType),
     /// Unknown tranform (type,id)
-    Unknown(IkeTransformType,u16),
+    Unknown(IkeTransformType, u16),
 }
 
 impl<'a> From<&'a IkeV2RawTransform<'a>> for IkeV2Transform {
@@ -216,20 +225,20 @@ impl<'a> From<&'a IkeV2RawTransform<'a>> for IkeV2Transform {
         match r.transform_type {
             IkeTransformType::EncryptionAlgorithm => {
                 IkeV2Transform::Encryption(IkeTransformEncType(r.transform_id))
-            },
+            }
             IkeTransformType::PseudoRandomFunction => {
                 IkeV2Transform::PRF(IkeTransformPRFType(r.transform_id))
-            },
+            }
             IkeTransformType::IntegrityAlgorithm => {
                 IkeV2Transform::Auth(IkeTransformAuthType(r.transform_id))
-            },
+            }
             IkeTransformType::DiffieHellmanGroup => {
                 IkeV2Transform::DH(IkeTransformDHType(r.transform_id))
-            },
+            }
             IkeTransformType::ExtendedSequenceNumbers => {
                 IkeV2Transform::ESN(IkeTransformESNType(r.transform_id))
-            },
-            _ => IkeV2Transform::Unknown(r.transform_type,r.transform_id)
+            }
+            _ => IkeV2Transform::Unknown(r.transform_type, r.transform_id),
         }
     }
 }
@@ -254,6 +263,7 @@ impl fmt::Debug for IkeTransformType {
 }
 
 impl fmt::Debug for IkeTransformEncType {
+    #[rustfmt::skip]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.0 {
             1  => f.write_str("ENCR_DES_IV64"),
@@ -289,21 +299,22 @@ impl fmt::Debug for IkeTransformEncType {
 impl fmt::Debug for IkeTransformPRFType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.0 {
-            0  => f.write_str("Null"),
-            1  => f.write_str("PRF_HMAC_MD5"),
-            2  => f.write_str("PRF_HMAC_SHA1"),
-            3  => f.write_str("PRF_HMAC_TIGER"),
-            4  => f.write_str("PRF_AES128_XCBC"),
-            5  => f.write_str("PRF_HMAC_SHA2_256"),
-            6  => f.write_str("PRF_HMAC_SHA2_384"),
-            7  => f.write_str("PRF_HMAC_SHA2_512"),
-            8  => f.write_str("PRF_AES128_CMAC"),
-            n  => f.debug_tuple("IkeTransformPRFType").field(&n).finish(),
+            0 => f.write_str("Null"),
+            1 => f.write_str("PRF_HMAC_MD5"),
+            2 => f.write_str("PRF_HMAC_SHA1"),
+            3 => f.write_str("PRF_HMAC_TIGER"),
+            4 => f.write_str("PRF_AES128_XCBC"),
+            5 => f.write_str("PRF_HMAC_SHA2_256"),
+            6 => f.write_str("PRF_HMAC_SHA2_384"),
+            7 => f.write_str("PRF_HMAC_SHA2_512"),
+            8 => f.write_str("PRF_AES128_CMAC"),
+            n => f.debug_tuple("IkeTransformPRFType").field(&n).finish(),
         }
     }
 }
 
 impl fmt::Debug for IkeTransformAuthType {
+    #[rustfmt::skip]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.0 {
             0  => f.write_str("NONE"),
@@ -327,6 +338,7 @@ impl fmt::Debug for IkeTransformAuthType {
 }
 
 impl fmt::Debug for IkeTransformDHType {
+    #[rustfmt::skip]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.0 {
             0  => f.write_str("None"),
