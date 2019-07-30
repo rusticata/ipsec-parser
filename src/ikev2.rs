@@ -1,7 +1,7 @@
 use std::net::{IpAddr,Ipv4Addr,Ipv6Addr};
 use std::fmt;
-use ikev2_transforms::*;
-use ikev2_notify::NotifyType;
+use crate::ikev2_transforms::*;
+use crate::ikev2_notify::NotifyType;
 
 /// Payload exchange type: SA, Auth, CreateChildSA, etc.
 #[derive(Copy, Clone, PartialEq, Eq)]

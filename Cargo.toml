@@ -8,7 +8,9 @@ documentation = "https://docs.rs/ipsec-parser"
 name = "ipsec-parser"
 version = "0.4.1"
 authors = ["Pierre Chifflier <chifflier@wzdftpd.net>"]
-categories = ["parsing"]
+categories = ["parser-implementations"]
+readme = "README.md"
+edition = "2018"
 
 include = [
   "LICENSE-*",

@@ -1,8 +1,8 @@
 use nom;
 use nom::*;
-use ikev2::*;
-use ikev2_transforms::*;
-use ikev2_notify::NotifyType;
+use crate::ikev2::*;
+use crate::ikev2_transforms::*;
+use crate::ikev2_notify::NotifyType;
 
 named!(pub parse_ikev2_header<IkeV2Header>,
     do_parse!(
@@ -432,7 +432,7 @@ pub fn parse_ikev2_message<'a>(i: &[u8]) -> IResult<&[u8],(IkeV2Header,Result<Ve
 
 #[cfg(test)]
 mod tests {
-    use ikev2_parser::*;
+    use crate::ikev2_parser::*;
 
 static IKEV2_INIT_REQ: &'static [u8] = &[
     0x01, 0xf8, 0xc3, 0xd4, 0xbb, 0x77, 0x3f, 0x2f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
