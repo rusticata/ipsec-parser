@@ -4,16 +4,63 @@
 [![Apache License 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE-APACHE)
 [![Build Status](https://travis-ci.org/rusticata/ipsec-parser.svg?branch=master)](https://travis-ci.org/rusticata/ipsec-parser)
 
-## Overview
+<!-- cargo-sync-readme start -->
 
-ipsec-parser is a parser for the IPsec protocols: IKEv2, and reading the envelope of ESP encapsulated messages.
+# IPsec parsers
 
-This parser provides the base functions to read and analyze messages, but does not handle the interpretation of messages.
+This crate contains several parsers using for IPsec: IKEv2, and reading the envelope of ESP
+encapsulated messages.
+This parser provides the base functions to read and analyze messages, but does not handle the
+interpretation of messages.
 
-It cannot serialize messages, though this may be added later using the
-[cookie-factory](https://crates.io/cookie-factory) crate.
+ESP is supported, but only to read the envelope of the payload.
 
-For details and examples, see the [documentation](https://docs.rs/ipsec-parser/)
+Encapsulated ESP is supported, to differentiate between IKE and ESP headers.
+
+# IKEv2 parser
+
+An IKEv2 (RFC7296) parser, implemented with the [nom](https://github.com/Geal/nom)
+parser combinator framework.
+
+The code is available on [Github](https://github.com/rusticata/ipsec-parser)
+and is part of the [Rusticata](https://github.com/rusticata) project.
+
+To parse an IKE packet, first read the header using `parse_ikev2_header`, then use the type
+from the header to parse the remaining part:
+
+
+```rust
+use ipsec_parser::*;
+use nom::IResult;
+
+static IKEV2_INIT_RESP: &'static [u8] = include_bytes!("../assets/ike-sa-init-resp.bin");
+
+fn test_ikev2_init_resp() {
+    let bytes = IKEV2_INIT_RESP;
+    match parse_ikev2_header(&bytes) {
+        Ok( (rem, ref hdr) ) => {
+            match parse_ikev2_payload_list(rem,hdr.next_payload) {
+                Ok( (_, Ok(ref p)) ) => {
+                    // p is a list of payloads
+                    // first one is always dummy
+                    assert!(p.len() > 0);
+                    assert_eq!(p[0].content, IkeV2PayloadContent::Dummy);
+                    for payload in p {
+                        match payload.content {
+                            IkeV2PayloadContent::SA(ref sa) => { /* .. */ },
+                            _ => ()
+                        }
+                    }
+                },
+                e => { eprintln!("Parsing payload failed: {:?}", e); },
+            }
+        },
+        _ => { eprintln!("Parsing header failed"); },
+    }
+}
+```
+
+<!-- cargo-sync-readme end -->
 
 ## Changelog
 

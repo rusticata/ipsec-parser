@@ -1,6 +1,9 @@
 //! # IPsec parsers
 //!
-//! This crate contains several parsers using for IPsec. The most useful is the IKEv2 parser.
+//! This crate contains several parsers using for IPsec: IKEv2, and reading the envelope of ESP
+//! encapsulated messages.
+//! This parser provides the base functions to read and analyze messages, but does not handle the
+//! interpretation of messages.
 //!
 //! ESP is supported, but only to read the envelope of the payload.
 //!
@@ -18,7 +21,7 @@
 //! from the header to parse the remaining part:
 //!
 //!
-//! ```rust,no_run
+//! ```rust
 //! # extern crate nom;
 //! # extern crate ipsec_parser;
 //! use ipsec_parser::*;
