@@ -1,6 +1,8 @@
 use crate::ikev2::IkeV2Header;
 use crate::ikev2_parser::parse_ikev2_header;
-use nom::{be_u32, rest, IResult};
+use nom::combinator::rest;
+use nom::number::streaming::be_u32;
+use nom::IResult;
 
 /// Encapsulating Security Payload Packet Format
 ///
@@ -29,7 +31,7 @@ pub enum ESPData<'a> {
 ///
 /// *Note: input is entirely consumed*
 pub fn parse_esp_encapsulated<'a>(i: &'a [u8]) -> IResult<&'a [u8], ESPData<'a>> {
-    if peek!(i, be_u32)?.1 == 0 {
+    if peek!(i, call!(be_u32))?.1 == 0 {
         parse_ikev2_header(i).map(|x| (x.0, ESPData::IKE(x.1)))
     } else {
         parse_esp_header(i).map(|x| (x.0, ESPData::ESP(x.1)))

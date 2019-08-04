@@ -64,6 +64,10 @@ fn test_ikev2_init_resp() {
 
 ## Changelog
 
+### 0.5.0
+
+- Upgrade to nom 5
+
 ### 0.4.1
 
 - o not use glob imports in `use` groups (compatibility with rust 1.24)

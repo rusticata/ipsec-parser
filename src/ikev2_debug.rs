@@ -50,7 +50,7 @@ impl<'a> fmt::Debug for IkeV2RawTransform<'a> {
 impl<'a> fmt::Debug for NoncePayload<'a> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.debug_struct("NoncePayload")
-            .field("nonce_data", &HexSlice { d: self.nonce_data })
+            .field("nonce_data", &HexSlice(self.nonce_data))
             .finish()
     }
 }
@@ -62,7 +62,7 @@ impl<'a> fmt::Debug for NotifyPayload<'a> {
             .field("spi_size", &self.spi_size)
             .field("notify_type", &self.notify_type)
             .field("spi", &self.spi)
-            .field("notify_data", &self.notify_data.map(|o| HexSlice { d: o }))
+            .field("notify_data", &self.notify_data.map(HexSlice))
             .finish()
     }
 }

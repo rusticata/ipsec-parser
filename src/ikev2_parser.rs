@@ -1,8 +1,9 @@
 use crate::ikev2::*;
 use crate::ikev2_notify::NotifyType;
 use crate::ikev2_transforms::*;
-use nom;
-use nom::*;
+use nom::error::ErrorKind;
+use nom::number::streaming::{be_u16, be_u32, be_u64, be_u8};
+use nom::IResult;
 
 named! {pub parse_ikev2_header<IkeV2Header>,
     do_parse!(
@@ -10,7 +11,7 @@ named! {pub parse_ikev2_header<IkeV2Header>,
         resp_spi: be_u64 >>
         np:       be_u8 >>
         vers: bits!(
-            tuple!(take_bits!(u8,4),take_bits!(u8,4))
+            tuple!(take_bits!(4u8),take_bits!(4u8))
         ) >>
         ex:       be_u8 >>
         flags:    be_u8 >>
@@ -32,14 +33,18 @@ named! {pub parse_ikev2_header<IkeV2Header>,
     )
 }
 
+// not written inside do_parse, else compiler has trouble inferring types
+#[inline]
+fn bits_split_1(i: &[u8]) -> IResult<&[u8], (u8, u8)> {
+    bits!(i, pair!(take_bits!(1u8), take_bits!(7u8)))
+}
+
 named! {pub parse_ikev2_payload_generic<IkeV2GenericPayload>,
     do_parse!(
         np_type: be_u8 >>
-        b:       bits!(
-            tuple!(take_bits!(u8,1),take_bits!(u8,7))
-        ) >>
+        b:       bits_split_1 >>
         len:     be_u16 >>
-                 error_if!(len < 4, ErrorKind::Custom(128)) >>
+                 error_if!(len < 4, ErrorKind::Verify) >>
         data:    take!(len - 4) >>
         (
             IkeV2GenericPayload{
@@ -88,7 +93,7 @@ named! {pub parse_ikev2_proposal<IkeV2Proposal>,
        spi_size:       be_u8 >>
        num_transforms: be_u8 >>
        spi:            cond!(spi_size > 0,take!(spi_size)) >>
-                       error_if!(p_len < (8u16+spi_size as u16), ErrorKind::Custom(128)) >>
+                       error_if!(p_len < (8u16+spi_size as u16), ErrorKind::Verify) >>
        transforms:     flat_map!(
             take!( p_len - (8u16+spi_size as u16) ),
             count!(parse_ikev2_transform, num_transforms as usize)
@@ -124,7 +129,7 @@ pub fn parse_ikev2_payload_kex<'a>(
         i,
         dh:       be_u16 >>
         reserved: be_u16 >>
-                  error_if!(length < 4, ErrorKind::Custom(128)) >>
+                  error_if!(length < 4, ErrorKind::Verify) >>
         kex_data: take!(length-4) >>
         (
             IkeV2PayloadContent::KE(
@@ -147,7 +152,7 @@ pub fn parse_ikev2_payload_ident_init<'a>(
         id_type:   be_u8 >>
         reserved1: be_u8 >>
         reserved2: be_u16 >>
-                   error_if!(length < 4, ErrorKind::Custom(128)) >>
+                   error_if!(length < 4, ErrorKind::Verify) >>
         data:      take!(length-4) >>
         (
             IkeV2PayloadContent::IDi(
@@ -171,7 +176,7 @@ pub fn parse_ikev2_payload_ident_resp<'a>(
         id_type:   be_u8 >>
         reserved1: be_u8 >>
         reserved2: be_u16 >>
-                   error_if!(length < 4, ErrorKind::Custom(128)) >>
+                   error_if!(length < 4, ErrorKind::Verify) >>
         data:      take!(length-4) >>
         (
             IkeV2PayloadContent::IDr(
@@ -193,7 +198,7 @@ pub fn parse_ikev2_payload_certificate<'a>(
     do_parse! {
         i,
         encoding: be_u8 >>
-                  error_if!(length < 1, ErrorKind::Custom(128)) >>
+                  error_if!(length < 1, ErrorKind::Verify) >>
         data:     take!(length-1) >>
         (
             IkeV2PayloadContent::Certificate(
@@ -213,7 +218,7 @@ pub fn parse_ikev2_payload_certificate_request<'a>(
     do_parse! {
         i,
         encoding: be_u8 >>
-                  error_if!(length < 1, ErrorKind::Custom(128)) >>
+                  error_if!(length < 1, ErrorKind::Verify) >>
         data:     take!(length-1) >>
         (
             IkeV2PayloadContent::CertificateRequest(
@@ -233,7 +238,7 @@ pub fn parse_ikev2_payload_authentication<'a>(
     do_parse! {
         i,
         method: be_u8 >>
-                error_if!(length < 4, ErrorKind::Custom(128)) >>
+                error_if!(length < 4, ErrorKind::Verify) >>
         data:   take!(length-4) >>
         (
             IkeV2PayloadContent::Authentication(
@@ -294,7 +299,7 @@ pub fn parse_ikev2_payload_vendor_id<'a>(
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
     do_parse! {
         i,
-                   error_if!(length < 8, ErrorKind::Custom(128)) >>
+                   error_if!(length < 8, ErrorKind::Verify) >>
         vendor_id: take!(length-8) >>
         (
             IkeV2PayloadContent::VendorID(
@@ -313,7 +318,7 @@ pub fn parse_ikev2_payload_delete<'a>(
         proto_id:   be_u8 >>
         spi_size:   be_u8 >>
         num_spi:    be_u16 >>
-                    error_if!(length < 8, ErrorKind::Custom(128)) >>
+                    error_if!(length < 8, ErrorKind::Verify) >>
         spi:        take!(length-8) >>
         (
             IkeV2PayloadContent::Delete(
@@ -344,8 +349,8 @@ fn parse_ikev2_ts<'a>(i: &'a [u8]) -> IResult<&'a [u8], TrafficSelector<'a>> {
         sel_length:  be_u16 >>
         start_port:  be_u16 >>
         end_port:    be_u16 >>
-        start_addr:  apply!(parse_ts_addr,ts_type) >>
-        end_addr:    apply!(parse_ts_addr,ts_type) >>
+        start_addr:  call!(parse_ts_addr,ts_type) >>
+        end_addr:    call!(parse_ts_addr,ts_type) >>
         (
             TrafficSelector{
                 ts_type: TSType(ts_type),
@@ -368,7 +373,7 @@ pub fn parse_ikev2_payload_ts<'a>(
         i,
         num_ts:   be_u8 >>
         reserved: take!(3) >>
-                  error_if!(length < 4, ErrorKind::Custom(128)) >>
+                  error_if!(length < 4, ErrorKind::Verify) >>
         ts:       flat_map!(take!(length-4),
             many1!(complete!(parse_ikev2_ts))
         ) >>
@@ -466,20 +471,30 @@ pub fn parse_ikev2_payload_list<'a>(
     i: &'a [u8],
     initial_type: IkePayloadType,
 ) -> IResult<&'a [u8], Result<Vec<IkeV2Payload<'a>>, &'static str>> {
-    fold_many1!(
-        i,
-        complete!(parse_ikev2_payload_generic),
-        Ok(vec![IkeV2Payload {
-            hdr: IkeV2PayloadHeader {
-                next_payload_type: initial_type,
-                critical: false,
-                reserved: 0,
-                payload_length: 0
-            },
-            content: IkeV2PayloadContent::Dummy,
-        },]),
-        parse_ikev2_payload_list_fold
-    )
+    // XXX fold manually, because fold_many1 requires accumulator to have Clone, and we don't want
+    // XXX to implement that for IkeV2Payload
+    let mut acc = Ok(vec![IkeV2Payload {
+        hdr: IkeV2PayloadHeader {
+            next_payload_type: initial_type,
+            critical: false,
+            reserved: 0,
+            payload_length: 0,
+        },
+        content: IkeV2PayloadContent::Dummy,
+    }]);
+    let mut i = i.clone();
+    loop {
+        if i.len() == 0 {
+            break;
+        }
+
+        let (rem, p) = complete!(i, parse_ikev2_payload_generic)?;
+
+        acc = parse_ikev2_payload_list_fold(acc, p);
+
+        i = rem;
+    }
+    Ok((i, acc))
     // XXX should we split_first() the vector and return all but the first element ?
 }
 
@@ -489,16 +504,19 @@ pub fn parse_ikev2_payload_list<'a>(
 pub fn parse_ikev2_message<'a>(
     i: &[u8],
 ) -> IResult<&[u8], (IkeV2Header, Result<Vec<IkeV2Payload>, &'static str>)> {
-    do_parse!(
+    do_parse! {
         i,
-        hdr: parse_ikev2_header
-            >> error_if!(hdr.length < 28, ErrorKind::Custom(128))
-            >> msg: flat_map!(
-                take!(hdr.length - 28),
-                call!(parse_ikev2_payload_list, hdr.next_payload)
-            )
-            >> (hdr, msg)
-    )
+        hdr: parse_ikev2_header >>
+             error_if!(hdr.length < 28, ErrorKind::Verify) >>
+        // copy values, flat_map moves values
+        l:   q!(hdr.length) >>
+        n:   q!(hdr.next_payload) >>
+        msg: flat_map!(
+                take!(l - 28),
+                call!(parse_ikev2_payload_list, n)
+            ) >>
+        (hdr, msg)
+    }
 }
 
 #[cfg(test)]
