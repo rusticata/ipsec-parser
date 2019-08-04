@@ -62,9 +62,11 @@ extern crate rusticata_macros;
 #[macro_use]
 extern crate nom;
 
+mod error;
 mod ikev2;
 mod ikev2_notify;
 mod ikev2_transforms;
+pub use error::*;
 pub use ikev2::*;
 pub use ikev2_notify::*;
 pub use ikev2_transforms::*;

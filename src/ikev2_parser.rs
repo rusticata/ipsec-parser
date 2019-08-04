@@ -1,3 +1,4 @@
+use crate::error::IPsecError;
 use crate::ikev2::*;
 use crate::ikev2_notify::NotifyType;
 use crate::ikev2_transforms::*;
@@ -437,40 +438,43 @@ pub fn parse_ikev2_payload_with_type(
 }
 
 fn parse_ikev2_payload_list_fold<'a>(
-    res_v: Result<Vec<IkeV2Payload<'a>>, &'static str>,
+    res_v: Result<Vec<IkeV2Payload<'a>>, IPsecError>,
     p: IkeV2GenericPayload<'a>,
-) -> Result<Vec<IkeV2Payload<'a>>, &'static str> {
+) -> Result<Vec<IkeV2Payload<'a>>, IPsecError> {
     let mut v = res_v?;
     // println!("parse_payload_list_fold: v.len={} p={:?}",v.len(),p);
-    let next_payload_type = match v.last() {
-        Some(el) => el.hdr.next_payload_type,
-        None => {
-            return Err("parse_ikev2_payload_list_fold: next payload type");
-        }
-    };
+    assert!(v.len() > 0);
+    let last_payload = v
+        .last()
+        .expect("parse_payload_list_fold: called with empty input");
+    let next_payload_type = last_payload.hdr.next_payload_type;
     if p.hdr.payload_length < 4 {
-        return Err("parse_ikev2_payload_list_fold: p.hdr.payload_length");
+        return Err(IPsecError::PayloadTooSmall);
     }
-    let res = parse_ikev2_payload_with_type(p.payload, p.hdr.payload_length - 4, next_payload_type);
-    if let Ok((rem, p2)) = res {
-        if rem.len() != 0 {
-            return Err("parse_ikev2_payload_list_fold: rem is not empty");
+    match parse_ikev2_payload_with_type(p.payload, p.hdr.payload_length - 4, next_payload_type) {
+        Ok((rem, p2)) => {
+            // let (rem, p2) = parse_ikev2_payload_with_type(p.payload, p.hdr.payload_length - 4, next_payload_type)?;
+            if rem.len() != 0 {
+                return Err(IPsecError::ExtraBytesInPayload); // XXX should this be only a warning?
+            }
+            let payload = IkeV2Payload {
+                hdr: p.hdr.clone(),
+                content: p2,
+            };
+            v.push(payload);
+            Ok(v)
         }
-        let payload = IkeV2Payload {
-            hdr: p.hdr.clone(),
-            content: p2,
-        };
-        v.push(payload);
-        Ok(v)
-    } else {
-        Err("parse_ikev2_payload_list_fold: parsing type failed")
+        Err(nom::Err::Error((_, e))) | Err(nom::Err::Failure((_, e))) => {
+            Err(IPsecError::NomError(e))
+        }
+        Err(nom::Err::Incomplete(_)) => Err(IPsecError::NomError(ErrorKind::Complete)),
     }
 }
 
 pub fn parse_ikev2_payload_list<'a>(
     i: &'a [u8],
     initial_type: IkePayloadType,
-) -> IResult<&'a [u8], Result<Vec<IkeV2Payload<'a>>, &'static str>> {
+) -> IResult<&'a [u8], Result<Vec<IkeV2Payload<'a>>, IPsecError>> {
     // XXX fold manually, because fold_many1 requires accumulator to have Clone, and we don't want
     // XXX to implement that for IkeV2Payload
     let mut acc = Ok(vec![IkeV2Payload {
@@ -503,7 +507,7 @@ pub fn parse_ikev2_payload_list<'a>(
 /// Parse the IKEv2 header and payload list
 pub fn parse_ikev2_message<'a>(
     i: &[u8],
-) -> IResult<&[u8], (IkeV2Header, Result<Vec<IkeV2Payload>, &'static str>)> {
+) -> IResult<&[u8], (IkeV2Header, Result<Vec<IkeV2Payload>, IPsecError>)> {
     do_parse! {
         i,
         hdr: parse_ikev2_header >>
