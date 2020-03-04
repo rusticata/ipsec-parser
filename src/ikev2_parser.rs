@@ -454,7 +454,7 @@ fn parse_ikev2_payload_list_fold<'a>(
 ) -> Result<Vec<IkeV2Payload<'a>>, IPsecError> {
     let mut v = res_v?;
     // println!("parse_payload_list_fold: v.len={} p={:?}",v.len(),p);
-    assert!(v.len() > 0);
+    debug_assert!(!v.is_empty());
     let last_payload = v
         .last()
         .expect("parse_payload_list_fold: called with empty input");
@@ -465,7 +465,7 @@ fn parse_ikev2_payload_list_fold<'a>(
     match parse_ikev2_payload_with_type(p.payload, p.hdr.payload_length - 4, next_payload_type) {
         Ok((rem, p2)) => {
             // let (rem, p2) = parse_ikev2_payload_with_type(p.payload, p.hdr.payload_length - 4, next_payload_type)?;
-            if rem.len() != 0 {
+            if !rem.is_empty() {
                 return Err(IPsecError::ExtraBytesInPayload); // XXX should this be only a warning?
             }
             let payload = IkeV2Payload {
@@ -497,9 +497,10 @@ pub fn parse_ikev2_payload_list<'a>(
         },
         content: IkeV2PayloadContent::Dummy,
     }]);
+    #[allow(clippy::clone_double_ref)]
     let mut i = i.clone();
     loop {
-        if i.len() == 0 {
+        if i.is_empty() {
             break;
         }
 
@@ -516,7 +517,8 @@ pub fn parse_ikev2_payload_list<'a>(
 /// Parse an IKEv2 message
 ///
 /// Parse the IKEv2 header and payload list
-pub fn parse_ikev2_message<'a>(
+#[allow(clippy::type_complexity)]
+pub fn parse_ikev2_message(
     i: &[u8],
 ) -> IResult<&[u8], (IkeV2Header, Result<Vec<IkeV2Payload>, IPsecError>)> {
     do_parse! {

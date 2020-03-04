@@ -59,8 +59,8 @@ impl IkeTransformEncType {
 }
 
 impl IkeTransformEncType {
-    pub fn is_aead(&self) -> bool {
-        match *self {
+    pub fn is_aead(self) -> bool {
+        match self {
             IkeTransformEncType::ENCR_AES_CCM_8
             | IkeTransformEncType::ENCR_AES_CCM_12
             | IkeTransformEncType::ENCR_AES_CCM_16
@@ -75,10 +75,10 @@ impl IkeTransformEncType {
         }
     }
 
-    pub fn is_unassigned(&self) -> bool {
+    pub fn is_unassigned(self) -> bool {
         self.0 >= 23 && self.0 <= 1023
     }
-    pub fn is_private_use(&self) -> bool {
+    pub fn is_private_use(self) -> bool {
         self.0 >= 1024
     }
 }
@@ -103,8 +103,8 @@ impl IkeTransformPRFType {
     pub const PRF_HMAC_SHA2_512 : IkeTransformPRFType = IkeTransformPRFType(7);
     pub const PRF_AES128_CMAC   : IkeTransformPRFType = IkeTransformPRFType(8);
 
-    pub fn is_unassigned(&self) -> bool { self.0 >= 9 && self.0 <= 1023 }
-    pub fn is_private_use(&self) -> bool { self.0 >= 1024 }
+    pub fn is_unassigned(self) -> bool { self.0 >= 9 && self.0 <= 1023 }
+    pub fn is_private_use(self) -> bool { self.0 >= 1024 }
 }
 
 /// Authentication / Integrity values
@@ -131,8 +131,8 @@ impl IkeTransformAuthType {
     pub const AUTH_HMAC_SHA2_384_192 : IkeTransformAuthType = IkeTransformAuthType(13);
     pub const AUTH_HMAC_SHA2_512_256 : IkeTransformAuthType = IkeTransformAuthType(14);
 
-    pub fn is_unassigned(&self) -> bool { self.0 >= 15 && self.0 <= 1023 }
-    pub fn is_private_use(&self) -> bool { self.0 >= 1024 }
+    pub fn is_unassigned(self) -> bool { self.0 >= 15 && self.0 <= 1023 }
+    pub fn is_private_use(self) -> bool { self.0 >= 1024 }
 }
 
 /// Diffie-Hellman values
@@ -170,8 +170,8 @@ impl IkeTransformDHType {
     pub const Curve25519      : IkeTransformDHType = IkeTransformDHType(31);
     pub const Curve448        : IkeTransformDHType = IkeTransformDHType(32);
 
-    pub fn is_unassigned(&self) -> bool { self.0 >= 15 && self.0 <= 1023 }
-    pub fn is_private_use(&self) -> bool { self.0 >= 1024 }
+    pub fn is_unassigned(self) -> bool { self.0 >= 15 && self.0 <= 1023 }
+    pub fn is_private_use(self) -> bool { self.0 >= 1024 }
 }
 
 /// Extended Sequence Number values

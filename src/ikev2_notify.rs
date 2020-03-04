@@ -78,8 +78,8 @@ impl NotifyType {
     pub const IKEV2_FRAGMENTATION_SUPPORTED : NotifyType = NotifyType(16430);
     pub const SIGNATURE_HASH_ALGORITHMS     : NotifyType = NotifyType(16431);
 
-    pub fn is_error(&self) -> bool { self.0 < 16384 }
-    pub fn is_status(&self) -> bool { self.0 > 16384 }
+    pub fn is_error(self) -> bool { self.0 < 16384 }
+    pub fn is_status(self) -> bool { self.0 > 16384 }
 }
 
 impl fmt::Debug for NotifyType {

@@ -52,8 +52,8 @@ impl fmt::Debug for ProtocolID {
 }
 
 pub const IKEV2_FLAG_INITIATOR: u8 = 0b1000;
-pub const IKEV2_FLAG_VERSION: u8 = 0b10000;
-pub const IKEV2_FLAG_RESPONSE: u8 = 0b100000;
+pub const IKEV2_FLAG_VERSION: u8 = 0b1_0000;
+pub const IKEV2_FLAG_RESPONSE: u8 = 0b10_0000;
 
 /// The IKE Header
 ///
@@ -426,13 +426,13 @@ impl AuthenticationMethod {
     pub const DigitalSig      : AuthenticationMethod = AuthenticationMethod(14);
 
     /// Test if value is in unassigned range
-    pub fn is_unassigned(&self) -> bool {
+    pub fn is_unassigned(self) -> bool {
         (self.0 >= 4 && self.0 <= 8) ||
         (self.0 >= 15 && self.0 <= 200)
     }
 
     /// Test if value is in private use range
-    pub fn is_private_use(&self) -> bool {
+    pub fn is_private_use(self) -> bool {
         self.0 >= 201
     }
 }
