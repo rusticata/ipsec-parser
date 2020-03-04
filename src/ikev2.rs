@@ -610,6 +610,16 @@ pub struct TrafficSelectorPayload<'a> {
     pub ts: Vec<TrafficSelector<'a>>,
 }
 
+/// Encrypted Payload
+///
+/// The Encrypted payload, denoted SK {...} in this document, contains
+/// other payloads in encrypted form.  The Encrypted payload, if present
+/// in a message, MUST be the last payload in the message.  Often, it is
+/// the only payload in the message.  This payload is also called the
+/// "Encrypted and Authenticated" payload.
+#[derive(Debug, PartialEq)]
+pub struct EncryptedPayload<'a>(pub &'a [u8]);
+
 /// IKE Message Payload Content
 ///
 /// The content of an IKE message is one of the defined payloads.
@@ -630,6 +640,7 @@ pub enum IkeV2PayloadContent<'a> {
     VendorID(VendorIDPayload<'a>),
     TSi(TrafficSelectorPayload<'a>),
     TSr(TrafficSelectorPayload<'a>),
+    Encrypted(EncryptedPayload<'a>),
 
     Unknown(&'a [u8]),
 

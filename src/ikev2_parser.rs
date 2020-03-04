@@ -402,6 +402,15 @@ pub fn parse_ikev2_payload_ts_resp<'a>(
     })
 }
 
+pub fn parse_ikev2_payload_encrypted<'a>(
+    i: &'a [u8],
+    length: u16,
+) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+    map!(i, take!(length), |d| {
+        IkeV2PayloadContent::Encrypted(EncryptedPayload(d))
+    })
+}
+
 pub fn parse_ikev2_payload_unknown<'a>(
     i: &'a [u8],
     length: u16,
@@ -417,19 +426,20 @@ pub fn parse_ikev2_payload_with_type(
 ) -> IResult<&[u8], IkeV2PayloadContent> {
     let f = match next_payload_type {
         // IkePayloadType::NoNextPayload       => parse_ikev2_payload_unknown, // XXX ?
-        IkePayloadType::SecurityAssociation      => parse_ikev2_payload_sa,
-        IkePayloadType::KeyExchange              => parse_ikev2_payload_kex,
-        IkePayloadType::IdentInitiator           => parse_ikev2_payload_ident_init,
-        IkePayloadType::IdentResponder           => parse_ikev2_payload_ident_resp,
-        IkePayloadType::Certificate              => parse_ikev2_payload_certificate,
-        IkePayloadType::CertificateRequest       => parse_ikev2_payload_certificate_request,
-        IkePayloadType::Authentication           => parse_ikev2_payload_authentication,
-        IkePayloadType::Nonce                    => parse_ikev2_payload_nonce,
-        IkePayloadType::Notify                   => parse_ikev2_payload_notify,
-        IkePayloadType::Delete                   => parse_ikev2_payload_delete,
-        IkePayloadType::VendorID                 => parse_ikev2_payload_vendor_id,
-        IkePayloadType::TrafficSelectorInitiator => parse_ikev2_payload_ts_init,
-        IkePayloadType::TrafficSelectorResponder => parse_ikev2_payload_ts_resp,
+        IkePayloadType::SecurityAssociation       => parse_ikev2_payload_sa,
+        IkePayloadType::KeyExchange               => parse_ikev2_payload_kex,
+        IkePayloadType::IdentInitiator            => parse_ikev2_payload_ident_init,
+        IkePayloadType::IdentResponder            => parse_ikev2_payload_ident_resp,
+        IkePayloadType::Certificate               => parse_ikev2_payload_certificate,
+        IkePayloadType::CertificateRequest        => parse_ikev2_payload_certificate_request,
+        IkePayloadType::Authentication            => parse_ikev2_payload_authentication,
+        IkePayloadType::Nonce                     => parse_ikev2_payload_nonce,
+        IkePayloadType::Notify                    => parse_ikev2_payload_notify,
+        IkePayloadType::Delete                    => parse_ikev2_payload_delete,
+        IkePayloadType::VendorID                  => parse_ikev2_payload_vendor_id,
+        IkePayloadType::TrafficSelectorInitiator  => parse_ikev2_payload_ts_init,
+        IkePayloadType::TrafficSelectorResponder  => parse_ikev2_payload_ts_resp,
+        IkePayloadType::EncryptedAndAuthenticated => parse_ikev2_payload_encrypted,
         // None                                               => parse_ikev2_payload_unknown,
         _ => parse_ikev2_payload_unknown,
         // _ => panic!("unknown type {}",next_payload_type),
@@ -664,5 +674,4 @@ static IKEV2_PAYLOAD_SA: &'static [u8] = &[
         let res = parse_ikev2_payload_list(&bytes, IkePayloadType::SecurityAssociation);
         println!("{:?}", res);
     }
-
 }
