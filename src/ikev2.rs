@@ -1,30 +1,19 @@
 use crate::ikev2_notify::NotifyType;
 use crate::ikev2_transforms::*;
-use std::fmt;
+use rusticata_macros::newtype_enum;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 /// Payload exchange type: SA, Auth, CreateChildSA, etc.
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct IkeExchangeType(pub u8);
 
-#[rustfmt::skip]
-impl IkeExchangeType {
-    pub const IKE_SA_INIT     : IkeExchangeType = IkeExchangeType(34);
-    pub const IKE_AUTH        : IkeExchangeType = IkeExchangeType(35);
-    pub const CREATE_CHILD_SA : IkeExchangeType = IkeExchangeType(36);
-    pub const INFORMATIONAL   : IkeExchangeType = IkeExchangeType(37);
+newtype_enum! {
+impl debug IkeExchangeType {
+    IKE_SA_INIT     = 34,
+    IKE_AUTH        = 35,
+    CREATE_CHILD_SA = 36,
+    INFORMATIONAL   = 37,
 }
-
-impl fmt::Debug for IkeExchangeType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self.0 {
-            34 => f.write_str("IKE_SA_INIT"),
-            35 => f.write_str("IKE_AUTH"),
-            36 => f.write_str("CREATE_CHILD_SA"),
-            37 => f.write_str("INFORMATIONAL"),
-            n => f.debug_tuple("IkeExchangeType").field(&n).finish(),
-        }
-    }
 }
 
 /// Protocol type: IKE, AH or ESP
@@ -33,22 +22,12 @@ impl fmt::Debug for IkeExchangeType {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct ProtocolID(pub u8);
 
-#[rustfmt::skip]
-impl ProtocolID {
-    pub const IKE : ProtocolID = ProtocolID(1);
-    pub const AH  : ProtocolID = ProtocolID(2);
-    pub const ESP : ProtocolID = ProtocolID(3);
+newtype_enum! {
+impl debug ProtocolID {
+    IKE = 1,
+    AH  = 2,
+    ESP = 3,
 }
-
-impl fmt::Debug for ProtocolID {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self.0 {
-            1 => f.write_str("IKE"),
-            2 => f.write_str("AH"),
-            3 => f.write_str("ESP"),
-            n => f.debug_tuple("ProtocolID").field(&n).finish(),
-        }
-    }
 }
 
 pub const IKEV2_FLAG_INITIATOR: u8 = 0b1000;
@@ -105,51 +84,26 @@ pub struct IkeV2Header {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct IkePayloadType(pub u8);
 
-#[allow(non_upper_case_globals)]
-#[rustfmt::skip]
-impl IkePayloadType {
-    pub const NoNextPayload             : IkePayloadType = IkePayloadType(0);
-    pub const SecurityAssociation       : IkePayloadType = IkePayloadType(33);
-    pub const KeyExchange               : IkePayloadType = IkePayloadType(34);
-    pub const IdentInitiator            : IkePayloadType = IkePayloadType(35);
-    pub const IdentResponder            : IkePayloadType = IkePayloadType(36);
-    pub const Certificate               : IkePayloadType = IkePayloadType(37);
-    pub const CertificateRequest        : IkePayloadType = IkePayloadType(38);
-    pub const Authentication            : IkePayloadType = IkePayloadType(39);
-    pub const Nonce                     : IkePayloadType = IkePayloadType(40);
-    pub const Notify                    : IkePayloadType = IkePayloadType(41);
-    pub const Delete                    : IkePayloadType = IkePayloadType(42);
-    pub const VendorID                  : IkePayloadType = IkePayloadType(43);
-    pub const TrafficSelectorInitiator  : IkePayloadType = IkePayloadType(44);
-    pub const TrafficSelectorResponder  : IkePayloadType = IkePayloadType(45);
-    pub const EncryptedAndAuthenticated : IkePayloadType = IkePayloadType(46);
-    pub const Configuration             : IkePayloadType = IkePayloadType(47);
-    pub const ExtensibleAuthentication  : IkePayloadType = IkePayloadType(48);
+newtype_enum! {
+impl debug IkePayloadType {
+    NoNextPayload             = 0,
+    SecurityAssociation       = 33,
+    KeyExchange               = 34,
+    IdentInitiator            = 35,
+    IdentResponder            = 36,
+    Certificate               = 37,
+    CertificateRequest        = 38,
+    Authentication            = 39,
+    Nonce                     = 40,
+    Notify                    = 41,
+    Delete                    = 42,
+    VendorID                  = 43,
+    TrafficSelectorInitiator  = 44,
+    TrafficSelectorResponder  = 45,
+    EncryptedAndAuthenticated = 46,
+    Configuration             = 47,
+    ExtensibleAuthentication  = 48,
 }
-
-impl fmt::Debug for IkePayloadType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self.0 {
-            0 => f.write_str("NoNextPayload"),
-            33 => f.write_str("SecurityAssociation"),
-            34 => f.write_str("KeyExchange"),
-            35 => f.write_str("IdentInitiator"),
-            36 => f.write_str("IdentResponder"),
-            37 => f.write_str("Certificate"),
-            38 => f.write_str("CertificateRequest"),
-            39 => f.write_str("Authentication"),
-            40 => f.write_str("Nonce"),
-            41 => f.write_str("Notify"),
-            42 => f.write_str("Delete"),
-            43 => f.write_str("VendorID"),
-            44 => f.write_str("TrafficSelectorInitiator"),
-            45 => f.write_str("TrafficSelectorResponder"),
-            46 => f.write_str("EncryptedAndAuthenticated"),
-            47 => f.write_str("Configuration"),
-            48 => f.write_str("ExtensibleAuthentication"),
-            n => f.debug_tuple("IkePayloadType").field(&n).finish(),
-        }
-    }
 }
 
 /// Generic (unparsed payload)
