@@ -93,5 +93,4 @@ static IKEV2_MSG: &'static [u8] = &[
             assert_eq!(a.hdr.next_payload_type, IkePayloadType(*b));
         }
     }
-
 } // mod ikev2
