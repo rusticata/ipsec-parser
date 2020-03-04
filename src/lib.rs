@@ -56,6 +56,11 @@
 //! # }
 //! ```
 
+#![deny(/*missing_docs,*/
+        unstable_features,
+        unused_import_braces, unused_qualifications)]
+#![forbid(unsafe_code)]
+
 #[macro_use]
 extern crate rusticata_macros;
 
