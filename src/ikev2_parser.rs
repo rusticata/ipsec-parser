@@ -4,7 +4,8 @@ use crate::ikev2_notify::NotifyType;
 use crate::ikev2_transforms::*;
 use nom::error::ErrorKind;
 use nom::number::streaming::{be_u16, be_u32, be_u64, be_u8};
-use nom::IResult;
+use nom::*;
+use rusticata_macros::{error_if, q};
 
 named! {pub parse_ikev2_header<IkeV2Header>,
     do_parse!(

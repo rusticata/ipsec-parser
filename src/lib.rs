@@ -61,12 +61,6 @@
         unused_import_braces, unused_qualifications)]
 #![forbid(unsafe_code)]
 
-#[macro_use]
-extern crate rusticata_macros;
-
-#[macro_use]
-extern crate nom;
-
 mod error;
 mod ikev2;
 mod ikev2_notify;
