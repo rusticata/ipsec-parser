@@ -1,8 +1,9 @@
 use crate::ikev2::IkeV2Header;
 use crate::ikev2_parser::parse_ikev2_header;
+use nom::bytes::streaming::take;
 use nom::combinator::rest;
 use nom::number::streaming::be_u32;
-use nom::{call, do_parse, peek, take, IResult};
+use nom::IResult;
 
 /// Encapsulating Security Payload Packet Format
 ///
@@ -31,7 +32,7 @@ pub enum ESPData<'a> {
 ///
 /// *Note: input is entirely consumed*
 pub fn parse_esp_encapsulated<'a>(i: &'a [u8]) -> IResult<&'a [u8], ESPData<'a>> {
-    if peek!(i, call!(be_u32))?.1 == 0 {
+    if be_u32(i)?.1 == 0 {
         parse_ikev2_header(i).map(|x| (x.0, ESPData::IKE(x.1)))
     } else {
         parse_esp_header(i).map(|x| (x.0, ESPData::ESP(x.1)))
@@ -48,17 +49,13 @@ pub fn parse_esp_encapsulated<'a>(i: &'a [u8]) -> IResult<&'a [u8], ESPData<'a>>
 ///
 /// *Note: input is entirely consumed*
 pub fn parse_esp_header<'a>(i: &'a [u8]) -> IResult<&'a [u8], ESPHeader<'a>> {
-    do_parse! {
-        i,
-        spi_index:  take!(4) >>
-        seq:        be_u32 >>
-        data:       rest >>
-        (
-            ESPHeader{
-                spi_index,
-                seq,
-                data
-            }
-        )
-    }
+    let (i, spi_index) = take(4usize)(i)?;
+    let (i, seq) = be_u32(i)?;
+    let (i, data) = rest(i)?;
+    let hdr = ESPHeader {
+        spi_index,
+        seq,
+        data,
+    };
+    Ok((i, hdr))
 }
