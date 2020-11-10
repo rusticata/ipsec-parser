@@ -475,8 +475,8 @@ fn parse_ikev2_payload_list_fold<'a>(
             v.push(payload);
             Ok(v)
         }
-        Err(nom::Err::Error((_, e))) | Err(nom::Err::Failure((_, e))) => {
-            Err(IPsecError::NomError(e))
+        Err(nom::Err::Error(e)) | Err(nom::Err::Failure(e)) => {
+            Err(IPsecError::NomError(e.code))
         }
         Err(nom::Err::Incomplete(_)) => Err(IPsecError::NomError(ErrorKind::Complete)),
     }

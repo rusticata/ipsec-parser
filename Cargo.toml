@@ -6,7 +6,7 @@ homepage = "https://github.com/rusticata/ipsec-parser"
 repository = "https://github.com/rusticata/ipsec-parser.git"
 documentation = "https://docs.rs/ipsec-parser"
 name = "ipsec-parser"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Pierre Chifflier <chifflier@wzdftpd.net>"]
 categories = ["parser-implementations"]
 readme = "README.md"
@@ -22,8 +22,8 @@ include = [
 ]
 
 [dependencies]
-nom = "5.0"
-rusticata-macros = "2.0"
+nom = "6.0"
+rusticata-macros = "3.0"
 
 [badges]
 travis-ci = { repository = "rusticata/ipsec-parser" }
