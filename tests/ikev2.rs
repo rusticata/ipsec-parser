@@ -5,7 +5,7 @@ mod ikev2 {
     use ipsec_parser::*;
 
     #[rustfmt::skip]
-static IKEV2_MSG: &'static [u8] = &[
+static IKEV2_MSG: &[u8] = &[
   0x00, 0x00, 0x00, 0x00, 0xbc, 0xa1, 0x93, 0x7a, 0x7c, 0x2f, 0xf5, 0xb9, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x21, 0x20, 0x22, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x2c,
   0x22, 0x00, 0x00, 0xa4, 0x02, 0x00, 0x00, 0x24, 0x01, 0x01, 0x00, 0x03, 0x03, 0x00, 0x00, 0x0c,
@@ -64,11 +64,11 @@ static IKEV2_MSG: &'static [u8] = &[
                     .iter()
                     .for_each(|a| assert_eq!(a.transforms.len(), a.num_transforms as usize));
             }
-            _ => assert!(false),
+            _ => panic!("wrong type"),
         }
     }
 
-    static IKEV2_INIT_REQ: &'static [u8] = include_bytes!("../assets/ike-sa-init-req.bin");
+    static IKEV2_INIT_REQ: &[u8] = include_bytes!("../assets/ike-sa-init-req.bin");
 
     #[test]
     fn test_ipsec_ike_message() {

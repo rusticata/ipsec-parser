@@ -73,13 +73,13 @@ named! {pub parse_ikev2_transform<IkeV2RawTransform>,
         attributes:       cond!(transform_length > 8,take!(transform_length-8)) >>
         (
             IkeV2RawTransform{
-                last: last,
-                reserved1:reserved1,
-                transform_length: transform_length,
+                last,
+                reserved1,
+                transform_length,
                 transform_type: IkeTransformType(transform_type),
-                reserved2: reserved2,
-                transform_id: transform_id,
-                attributes: attributes,
+                reserved2,
+                transform_id,
+                attributes,
             }
         )
     )
@@ -160,8 +160,8 @@ pub fn parse_ikev2_payload_ident_init<'a>(
             IkeV2PayloadContent::IDi(
                 IdentificationPayload{
                     id_type: IdentificationType(id_type),
-                    reserved1: reserved1,
-                    reserved2: reserved2,
+                    reserved1,
+                    reserved2,
                     ident_data: data,
                 }
             )
@@ -541,7 +541,7 @@ mod tests {
     use crate::ikev2_parser::*;
 
     #[rustfmt::skip]
-static IKEV2_INIT_REQ: &'static [u8] = &[
+static IKEV2_INIT_REQ: &[u8] = &[
     0x01, 0xf8, 0xc3, 0xd4, 0xbb, 0x77, 0x3f, 0x2f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x21, 0x20, 0x22, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x48, 0x22, 0x00, 0x00, 0x30,
     0x00, 0x00, 0x00, 0x2c, 0x01, 0x01, 0x00, 0x04, 0x03, 0x00, 0x00, 0x0c, 0x01, 0x00, 0x00, 0x14,
@@ -587,7 +587,7 @@ static IKEV2_INIT_REQ: &'static [u8] = &[
         assert_eq!(res, expected);
     }
 
-    static IKEV2_INIT_RESP: &'static [u8] = include_bytes!("../assets/ike-sa-init-resp.bin");
+    static IKEV2_INIT_RESP: &[u8] = include_bytes!("../assets/ike-sa-init-resp.bin");
 
     #[test]
     fn test_ikev2_init_resp() {
@@ -604,7 +604,7 @@ static IKEV2_INIT_REQ: &'static [u8] = &[
     }
 
     #[rustfmt::skip]
-static IKEV2_PAYLOAD_SA: &'static [u8] = &[
+static IKEV2_PAYLOAD_SA: &[u8] = &[
     0x22, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x24, 0x01, 0x01, 0x00, 0x03, 0x03, 0x00, 0x00, 0x0c,
     0x01, 0x00, 0x00, 0x14, 0x80, 0x0e, 0x00, 0x80, 0x03, 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x05,
     0x00, 0x00, 0x00, 0x08, 0x04, 0x00, 0x00, 0x1e

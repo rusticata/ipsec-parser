@@ -55,9 +55,9 @@ pub fn parse_esp_header<'a>(i: &'a [u8]) -> IResult<&'a [u8], ESPHeader<'a>> {
         data:       rest >>
         (
             ESPHeader{
-                spi_index: spi_index,
-                seq: seq,
-                data: data
+                spi_index,
+                seq,
+                data
             }
         )
     }
