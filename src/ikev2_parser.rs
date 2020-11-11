@@ -7,8 +7,7 @@ use nom::combinator::{complete, cond, map, map_parser, verify};
 use nom::error::{make_error, ErrorKind};
 use nom::multi::{count, many1};
 use nom::number::streaming::{be_u16, be_u32, be_u64, be_u8};
-use nom::*;
-use rusticata_macros::{error_if, q};
+use nom::{Err, IResult, Needed};
 
 pub fn parse_ikev2_header(i: &[u8]) -> IResult<&[u8], IkeV2Header> {
     if i.len() < 28 {
@@ -38,7 +37,6 @@ pub fn parse_ikev2_header(i: &[u8]) -> IResult<&[u8], IkeV2Header> {
     Ok((i, hdr))
 }
 
-// not written inside do_parse, else compiler has trouble inferring types
 #[inline]
 fn bits_split_1(i: &[u8]) -> IResult<&[u8], (u8, u8)> {
     let (i, b) = be_u8(i)?;
@@ -69,7 +67,9 @@ pub fn parse_ikev2_transform(i: &[u8]) -> IResult<&[u8], IkeV2RawTransform> {
     let (i, transform_type) = be_u8(i)?;
     let (i, reserved2) = be_u8(i)?;
     let (i, transform_id) = be_u16(i)?;
-    let (i, attributes) = cond(transform_length > 8, take(transform_length - 8))(i)?;
+    // we have to specify a callback here to force lazy evaluation,
+    // because the function arguments are evaluated *before* the test (causing underflow)
+    let (i, attributes) = cond(transform_length > 8, |d| take(transform_length - 8)(d))(i)?;
     let transform = IkeV2RawTransform {
         last,
         reserved1,
@@ -219,20 +219,16 @@ pub fn parse_ikev2_payload_authentication<'a>(
     i: &'a [u8],
     length: u16,
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
-    do_parse! {
-        i,
-        method: be_u8 >>
-                error_if!(length < 4, ErrorKind::Verify) >>
-        data:   take!(length-4) >>
-        (
-            IkeV2PayloadContent::Authentication(
-                AuthenticationPayload{
-                    auth_method: AuthenticationMethod(method),
-                    auth_data:   data,
-                }
-            )
-        )
+    if length < 4 {
+        return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
+    let (i, auth_method) = map(be_u8, AuthenticationMethod)(i)?;
+    let (i, auth_data) = take(length - 4)(i)?;
+    let payload = AuthenticationPayload {
+        auth_method,
+        auth_data,
+    };
+    Ok((i, IkeV2PayloadContent::Authentication(payload)))
 }
 
 pub fn parse_ikev2_payload_nonce<'a>(
@@ -247,115 +243,104 @@ pub fn parse_ikev2_payload_notify<'a>(
     i: &'a [u8],
     length: u16,
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
-    do_parse! {
-        i,
-        proto_id:    be_u8 >>
-        spi_size:    be_u8 >>
-        notify_type: be_u16 >>
-        spi:         cond!(spi_size > 0, take!(spi_size)) >>
-        notify_data: cond!(length > 8 + spi_size as u16, take!(length-(8+spi_size as u16))) >>
-        (
-            IkeV2PayloadContent::Notify(
-                NotifyPayload{
-                    protocol_id: ProtocolID(proto_id),
-                    spi_size,
-                    notify_type: NotifyType(notify_type),
-                    spi,
-                    notify_data,
-                }
-            )
-        )
-    }
+    let (i, protocol_id) = map(be_u8, ProtocolID)(i)?;
+    let (i, spi_size) = be_u8(i)?;
+    let (i, notify_type) = map(be_u16, NotifyType)(i)?;
+    let (i, spi) = cond(spi_size > 0, take(spi_size))(i)?;
+    let (i, notify_data) = cond(
+        length > 8 + spi_size as u16,
+        // we have to specify a callback here to force lazy evaluation,
+        // because the function arguments are evaluated *before* the test (causing underflow)
+        |d| take(length - (8 + spi_size as u16))(d),
+    )(i)?;
+    let payload = NotifyPayload {
+        protocol_id,
+        spi_size,
+        notify_type,
+        spi,
+        notify_data,
+    };
+    Ok((i, IkeV2PayloadContent::Notify(payload)))
 }
 
 pub fn parse_ikev2_payload_vendor_id<'a>(
     i: &'a [u8],
     length: u16,
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
-    do_parse! {
-        i,
-                   error_if!(length < 8, ErrorKind::Verify) >>
-        vendor_id: take!(length-8) >>
-        (
-            IkeV2PayloadContent::VendorID(
-                VendorIDPayload{ vendor_id }
-            )
-        )
+    if length < 8 {
+        return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
+    let (i, vendor_id) = take(length - 8)(i)?;
+    Ok((
+        i,
+        IkeV2PayloadContent::VendorID(VendorIDPayload { vendor_id }),
+    ))
 }
 
 pub fn parse_ikev2_payload_delete<'a>(
     i: &'a [u8],
     length: u16,
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
-    do_parse! {
-        i,
-        proto_id:   be_u8 >>
-        spi_size:   be_u8 >>
-        num_spi:    be_u16 >>
-                    error_if!(length < 8, ErrorKind::Verify) >>
-        spi:        take!(length-8) >>
-        (
-            IkeV2PayloadContent::Delete(
-                DeletePayload{
-                    protocol_id: ProtocolID(proto_id),
-                    spi_size,
-                    num_spi,
-                    spi,
-                }
-            )
-        )
+    if length < 8 {
+        return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
+    let (i, protocol_id) = map(be_u8, ProtocolID)(i)?;
+    let (i, spi_size) = be_u8(i)?;
+    let (i, num_spi) = be_u16(i)?;
+    let (i, spi) = take(length - 8)(i)?;
+    let payload = DeletePayload {
+        protocol_id,
+        spi_size,
+        num_spi,
+        spi,
+    };
+    Ok((i, IkeV2PayloadContent::Delete(payload)))
 }
 
-fn parse_ts_addr<'a>(i: &'a [u8], t: u8) -> IResult<&'a [u8], &'a [u8]> {
+fn parse_ts_addr<'a>(i: &'a [u8], t: TSType) -> IResult<&'a [u8], &'a [u8]> {
     match t {
-        7 => take(4usize)(i),
-        8 => take(16usize)(i),
+        TSType::IPv4AddrRange => take(4usize)(i),
+        TSType::IPv6AddrRange => take(16usize)(i),
         _ => Err(nom::Err::Error(make_error(i, ErrorKind::Switch))),
     }
 }
 
 fn parse_ikev2_ts<'a>(i: &'a [u8]) -> IResult<&'a [u8], TrafficSelector<'a>> {
-    do_parse! {
-        i,
-        ts_type:     be_u8 >>
-        ip_proto_id: be_u8 >>
-        sel_length:  be_u16 >>
-        start_port:  be_u16 >>
-        end_port:    be_u16 >>
-        start_addr:  call!(parse_ts_addr,ts_type) >>
-        end_addr:    call!(parse_ts_addr,ts_type) >>
-        (
-            TrafficSelector{
-                ts_type: TSType(ts_type),
-                ip_proto_id,
-                sel_length,
-                start_port,
-                end_port,
-                start_addr,
-                end_addr,
-            }
-        )
-    }
+    let (i, ts_type) = map(be_u8, TSType)(i)?;
+    let (i, ip_proto_id) = be_u8(i)?;
+    let (i, sel_length) = be_u16(i)?;
+    let (i, start_port) = be_u16(i)?;
+    let (i, end_port) = be_u16(i)?;
+    let (i, start_addr) = parse_ts_addr(i, ts_type)?;
+    let (i, end_addr) = parse_ts_addr(i, ts_type)?;
+    let ts = TrafficSelector {
+        ts_type,
+        ip_proto_id,
+        sel_length,
+        start_port,
+        end_port,
+        start_addr,
+        end_addr,
+    };
+    Ok((i, ts))
 }
 
 pub fn parse_ikev2_payload_ts<'a>(
     i: &'a [u8],
     length: u16,
 ) -> IResult<&'a [u8], TrafficSelectorPayload<'a>> {
-    do_parse! {
-        i,
-        num_ts:   be_u8 >>
-        reserved: take!(3) >>
-                  error_if!(length < 4, ErrorKind::Verify) >>
-        ts:       flat_map!(take!(length-4),
-            many1!(complete!(parse_ikev2_ts))
-        ) >>
-        (
-            TrafficSelectorPayload{ num_ts, reserved, ts }
-        )
+    if length < 4 {
+        return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
+    let (i, num_ts) = be_u8(i)?;
+    let (i, reserved) = take(3usize)(i)?;
+    let (i, ts) = map_parser(take(length - 4), many1(complete(parse_ikev2_ts)))(i)?;
+    let payload = TrafficSelectorPayload {
+        num_ts,
+        reserved,
+        ts,
+    };
+    Ok((i, payload))
 }
 
 pub fn parse_ikev2_payload_ts_init<'a>(
@@ -494,19 +479,14 @@ pub fn parse_ikev2_payload_list<'a>(
 pub fn parse_ikev2_message(
     i: &[u8],
 ) -> IResult<&[u8], (IkeV2Header, Result<Vec<IkeV2Payload>, IPsecError>)> {
-    do_parse! {
-        i,
-        hdr: parse_ikev2_header >>
-             error_if!(hdr.length < 28, ErrorKind::Verify) >>
-        // copy values, flat_map moves values
-        l:   q!(hdr.length) >>
-        n:   q!(hdr.next_payload) >>
-        msg: flat_map!(
-                take!(l - 28),
-                call!(parse_ikev2_payload_list, n)
-            ) >>
-        (hdr, msg)
+    let (i, hdr) = parse_ikev2_header(i)?;
+    if hdr.length < 28 {
+        return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
+    let (i, msg) = map_parser(take(hdr.length - 28), |d| {
+        parse_ikev2_payload_list(d, hdr.next_payload)
+    })(i)?;
+    Ok((i, (hdr, msg)))
 }
 
 #[cfg(test)]
