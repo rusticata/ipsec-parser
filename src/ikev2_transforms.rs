@@ -61,17 +61,19 @@ impl debug IkeTransformEncType {
 
 impl IkeTransformEncType {
     pub fn is_aead(self) -> bool {
-        matches!(self,
+        matches!(
+            self,
             IkeTransformEncType::ENCR_AES_CCM_8
-            | IkeTransformEncType::ENCR_AES_CCM_12
-            | IkeTransformEncType::ENCR_AES_CCM_16
-            | IkeTransformEncType::ENCR_AES_GCM_8
-            | IkeTransformEncType::ENCR_AES_GCM_12
-            | IkeTransformEncType::ENCR_AES_GCM_16
-            | IkeTransformEncType::ENCR_CAMELLIA_CCM_8
-            | IkeTransformEncType::ENCR_CAMELLIA_CCM_12
-            | IkeTransformEncType::ENCR_CAMELLIA_CCM_16
-            | IkeTransformEncType::ENCR_CHACHA20_POLY1305)
+                | IkeTransformEncType::ENCR_AES_CCM_12
+                | IkeTransformEncType::ENCR_AES_CCM_16
+                | IkeTransformEncType::ENCR_AES_GCM_8
+                | IkeTransformEncType::ENCR_AES_GCM_12
+                | IkeTransformEncType::ENCR_AES_GCM_16
+                | IkeTransformEncType::ENCR_CAMELLIA_CCM_8
+                | IkeTransformEncType::ENCR_CAMELLIA_CCM_12
+                | IkeTransformEncType::ENCR_CAMELLIA_CCM_16
+                | IkeTransformEncType::ENCR_CHACHA20_POLY1305
+        )
     }
 
     pub fn is_unassigned(self) -> bool {
