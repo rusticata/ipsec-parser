@@ -2,235 +2,217 @@ use crate::error::IPsecError;
 use crate::ikev2::*;
 use crate::ikev2_notify::NotifyType;
 use crate::ikev2_transforms::*;
-use nom::error::ErrorKind;
+use nom::bytes::streaming::take;
+use nom::combinator::{complete, cond, map, map_parser, verify};
+use nom::error::{make_error, ErrorKind};
+use nom::multi::{count, many1};
 use nom::number::streaming::{be_u16, be_u32, be_u64, be_u8};
 use nom::*;
 use rusticata_macros::{error_if, q};
 
-named! {pub parse_ikev2_header<IkeV2Header>,
-    do_parse!(
-        init_spi: be_u64 >>
-        resp_spi: be_u64 >>
-        np:       be_u8 >>
-        vers: bits!(
-            tuple!(take_bits!(4u8),take_bits!(4u8))
-        ) >>
-        ex:       be_u8 >>
-        flags:    be_u8 >>
-        id:       be_u32 >>
-        l:        be_u32 >>
-        (
-            IkeV2Header {
-                init_spi,
-                resp_spi,
-                next_payload: IkePayloadType(np),
-                maj_ver: vers.0,
-                min_ver: vers.1,
-                exch_type: IkeExchangeType(ex),
-                flags,
-                msg_id: id,
-                length: l,
-            }
-        )
-    )
+pub fn parse_ikev2_header(i: &[u8]) -> IResult<&[u8], IkeV2Header> {
+    if i.len() < 28 {
+        return Err(Err::Incomplete(Needed::new(28)));
+    }
+    let (i, init_spi) = be_u64(i)?;
+    let (i, resp_spi) = be_u64(i)?;
+    let (i, next_payload) = map(be_u8, IkePayloadType)(i)?;
+    let (i, vers) = be_u8(i)?;
+    let maj_ver = vers >> 4;
+    let min_ver = vers & 0b1111;
+    let (i, exch_type) = map(be_u8, IkeExchangeType)(i)?;
+    let (i, flags) = be_u8(i)?;
+    let (i, msg_id) = be_u32(i)?;
+    let (i, length) = be_u32(i)?;
+    let hdr = IkeV2Header {
+        init_spi,
+        resp_spi,
+        next_payload,
+        maj_ver,
+        min_ver,
+        exch_type,
+        flags,
+        msg_id,
+        length,
+    };
+    Ok((i, hdr))
 }
 
 // not written inside do_parse, else compiler has trouble inferring types
 #[inline]
 fn bits_split_1(i: &[u8]) -> IResult<&[u8], (u8, u8)> {
-    bits!(i, pair!(take_bits!(1u8), take_bits!(7u8)))
+    let (i, b) = be_u8(i)?;
+    let b1 = b >> 7;
+    let b2_7 = b & 0b_0111_1111;
+    Ok((i, (b1, b2_7)))
 }
 
-named! {pub parse_ikev2_payload_generic<IkeV2GenericPayload>,
-    do_parse!(
-        np_type: be_u8 >>
-        b:       bits_split_1 >>
-        len:     be_u16 >>
-                 error_if!(len < 4, ErrorKind::Verify) >>
-        data:    take!(len - 4) >>
-        (
-            IkeV2GenericPayload{
-                hdr: IkeV2PayloadHeader {
-                    next_payload_type: IkePayloadType(np_type),
-                    critical: b.0 == 1,
-                    reserved: b.1,
-                    payload_length: len,
-                },
-                payload: data,
-            }
-        )
-    )
+pub fn parse_ikev2_payload_generic(i: &[u8]) -> IResult<&[u8], IkeV2GenericPayload> {
+    let (i, next_payload_type) = map(be_u8, IkePayloadType)(i)?;
+    let (i, b) = bits_split_1(i)?;
+    let (i, payload_length) = verify(be_u16, |&n| n >= 4)(i)?;
+    let (i, payload) = take(payload_length - 4)(i)?;
+    let hdr = IkeV2PayloadHeader {
+        next_payload_type,
+        critical: b.0 == 1,
+        reserved: b.1,
+        payload_length,
+    };
+    let payload = IkeV2GenericPayload { hdr, payload };
+    Ok((i, payload))
 }
 
-named! {pub parse_ikev2_transform<IkeV2RawTransform>,
-    do_parse!(
-        last:             be_u8 >>
-        reserved1:        be_u8 >>
-        transform_length: be_u16 >>
-        transform_type:   be_u8 >>
-        reserved2:        be_u8 >>
-        transform_id:     be_u16 >>
-        attributes:       cond!(transform_length > 8,take!(transform_length-8)) >>
-        (
-            IkeV2RawTransform{
-                last,
-                reserved1,
-                transform_length,
-                transform_type: IkeTransformType(transform_type),
-                reserved2,
-                transform_id,
-                attributes,
-            }
-        )
-    )
+pub fn parse_ikev2_transform(i: &[u8]) -> IResult<&[u8], IkeV2RawTransform> {
+    let (i, last) = be_u8(i)?;
+    let (i, reserved1) = be_u8(i)?;
+    let (i, transform_length) = be_u16(i)?;
+    let (i, transform_type) = be_u8(i)?;
+    let (i, reserved2) = be_u8(i)?;
+    let (i, transform_id) = be_u16(i)?;
+    let (i, attributes) = cond(transform_length > 8, take(transform_length - 8))(i)?;
+    let transform = IkeV2RawTransform {
+        last,
+        reserved1,
+        transform_length,
+        transform_type: IkeTransformType(transform_type),
+        reserved2,
+        transform_id,
+        attributes,
+    };
+    Ok((i, transform))
 }
 
-named! {pub parse_ikev2_proposal<IkeV2Proposal>,
-    do_parse!(
-       last:           be_u8 >>
-       reserved:       be_u8 >>
-       p_len:          be_u16 >>
-       p_num:          be_u8 >>
-       proto_id:       be_u8 >>
-       spi_size:       be_u8 >>
-       num_transforms: be_u8 >>
-       spi:            cond!(spi_size > 0,take!(spi_size)) >>
-                       error_if!(p_len < (8u16+spi_size as u16), ErrorKind::Verify) >>
-       transforms:     flat_map!(
-            take!( p_len - (8u16+spi_size as u16) ),
-            count!(parse_ikev2_transform, num_transforms as usize)
-            ) >>
-        ( IkeV2Proposal{
-            last,
-            reserved,
-            proposal_length: p_len,
-            proposal_num: p_num,
-            protocol_id: ProtocolID(proto_id),
-            spi_size,
-            num_transforms,
-            spi,
-            transforms,
-        })
-    )
+pub fn parse_ikev2_proposal(i: &[u8]) -> IResult<&[u8], IkeV2Proposal> {
+    if i.len() < 8 {
+        return Err(Err::Incomplete(Needed::new(8)));
+    }
+    let (i, last) = be_u8(i)?;
+    let (i, reserved) = be_u8(i)?;
+    let (i, proposal_length) = be_u16(i)?;
+    let (i, proposal_num) = be_u8(i)?;
+    let (i, protocol_id) = map(be_u8, ProtocolID)(i)?;
+    let (i, spi_size) = be_u8(i)?;
+    let (i, num_transforms) = be_u8(i)?;
+    let (i, spi) = cond(spi_size > 0, take(spi_size))(i)?;
+    if proposal_length < (8u16 + spi_size as u16) {
+        return Err(Err::Error(make_error(i, ErrorKind::Verify)));
+    }
+    let (i, transforms) = map_parser(
+        take(proposal_length - 8 - (spi_size as u16)),
+        count(parse_ikev2_transform, num_transforms as usize),
+    )(i)?;
+    let proposal = IkeV2Proposal {
+        last,
+        reserved,
+        proposal_length,
+        proposal_num,
+        protocol_id,
+        spi_size,
+        num_transforms,
+        spi,
+        transforms,
+    };
+    Ok((i, proposal))
 }
 
 pub fn parse_ikev2_payload_sa<'a>(
     i: &'a [u8],
     _length: u16,
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
-    map!(i, many1!(complete!(parse_ikev2_proposal)), |v| {
-        IkeV2PayloadContent::SA(v)
-    })
+    map(
+        many1(complete(parse_ikev2_proposal)),
+        IkeV2PayloadContent::SA,
+    )(i)
 }
 
 pub fn parse_ikev2_payload_kex<'a>(
     i: &'a [u8],
     length: u16,
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
-    do_parse! {
-        i,
-        dh:       be_u16 >>
-        reserved: be_u16 >>
-                  error_if!(length < 4, ErrorKind::Verify) >>
-        kex_data: take!(length-4) >>
-        (
-            IkeV2PayloadContent::KE(
-                KeyExchangePayload{
-                    dh_group: IkeTransformDHType(dh),
-                    reserved,
-                    kex_data,
-                }
-            )
-        )
+    if length < 4 {
+        return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
+    let (i, dh_group) = map(be_u16, IkeTransformDHType)(i)?;
+    let (i, reserved) = be_u16(i)?;
+    let (i, kex_data) = take(length - 4)(i)?;
+    let payload = KeyExchangePayload {
+        dh_group,
+        reserved,
+        kex_data,
+    };
+    Ok((i, IkeV2PayloadContent::KE(payload)))
 }
 
 pub fn parse_ikev2_payload_ident_init<'a>(
     i: &'a [u8],
     length: u16,
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
-    do_parse! {
-        i,
-        id_type:   be_u8 >>
-        reserved1: be_u8 >>
-        reserved2: be_u16 >>
-                   error_if!(length < 4, ErrorKind::Verify) >>
-        data:      take!(length-4) >>
-        (
-            IkeV2PayloadContent::IDi(
-                IdentificationPayload{
-                    id_type: IdentificationType(id_type),
-                    reserved1,
-                    reserved2,
-                    ident_data: data,
-                }
-            )
-        )
+    if length < 4 {
+        return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
+    let (i, id_type) = map(be_u8, IdentificationType)(i)?;
+    let (i, reserved1) = be_u8(i)?;
+    let (i, reserved2) = be_u16(i)?;
+    let (i, ident_data) = take(length - 4)(i)?;
+    let payload = IdentificationPayload {
+        id_type,
+        reserved1,
+        reserved2,
+        ident_data,
+    };
+    Ok((i, IkeV2PayloadContent::IDi(payload)))
 }
 
 pub fn parse_ikev2_payload_ident_resp<'a>(
     i: &'a [u8],
     length: u16,
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
-    do_parse! {
-        i,
-        id_type:   be_u8 >>
-        reserved1: be_u8 >>
-        reserved2: be_u16 >>
-                   error_if!(length < 4, ErrorKind::Verify) >>
-        data:      take!(length-4) >>
-        (
-            IkeV2PayloadContent::IDr(
-                IdentificationPayload{
-                    id_type: IdentificationType(id_type),
-                    reserved1,
-                    reserved2,
-                    ident_data: data,
-                }
-            )
-        )
+    if length < 4 {
+        return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
+    let (i, id_type) = map(be_u8, IdentificationType)(i)?;
+    let (i, reserved1) = be_u8(i)?;
+    let (i, reserved2) = be_u16(i)?;
+    let (i, ident_data) = take(length - 4)(i)?;
+    let payload = IdentificationPayload {
+        id_type,
+        reserved1,
+        reserved2,
+        ident_data,
+    };
+    Ok((i, IkeV2PayloadContent::IDr(payload)))
 }
 
 pub fn parse_ikev2_payload_certificate<'a>(
     i: &'a [u8],
     length: u16,
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
-    do_parse! {
-        i,
-        encoding: be_u8 >>
-                  error_if!(length < 1, ErrorKind::Verify) >>
-        data:     take!(length-1) >>
-        (
-            IkeV2PayloadContent::Certificate(
-                CertificatePayload{
-                    cert_encoding: CertificateEncoding(encoding),
-                    cert_data: data,
-                }
-            )
-        )
+    if length < 1 {
+        return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
+    let (i, cert_encoding) = map(be_u8, CertificateEncoding)(i)?;
+    let (i, cert_data) = take(length - 1)(i)?;
+    let payload = CertificatePayload {
+        cert_encoding,
+        cert_data,
+    };
+    Ok((i, IkeV2PayloadContent::Certificate(payload)))
 }
 
 pub fn parse_ikev2_payload_certificate_request<'a>(
     i: &'a [u8],
     length: u16,
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
-    do_parse! {
-        i,
-        encoding: be_u8 >>
-                  error_if!(length < 1, ErrorKind::Verify) >>
-        data:     take!(length-1) >>
-        (
-            IkeV2PayloadContent::CertificateRequest(
-                CertificateRequestPayload{
-                    cert_encoding: CertificateEncoding(encoding),
-                    ca_data: data,
-                }
-            )
-        )
+    if length < 1 {
+        return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
+    let (i, cert_encoding) = map(be_u8, CertificateEncoding)(i)?;
+    let (i, ca_data) = take(length - 1)(i)?;
+    let payload = CertificateRequestPayload {
+        cert_encoding,
+        ca_data,
+    };
+    Ok((i, IkeV2PayloadContent::CertificateRequest(payload)))
 }
 
 pub fn parse_ikev2_payload_authentication<'a>(
@@ -257,17 +239,8 @@ pub fn parse_ikev2_payload_nonce<'a>(
     i: &'a [u8],
     length: u16,
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
-    do_parse! {
-        i,
-        data: take!(length) >>
-        (
-            IkeV2PayloadContent::Nonce(
-                NoncePayload{
-                    nonce_data: data,
-                }
-            )
-        )
-    }
+    let (i, nonce_data) = take(length)(i)?;
+    Ok((i, IkeV2PayloadContent::Nonce(NoncePayload { nonce_data })))
 }
 
 pub fn parse_ikev2_payload_notify<'a>(
@@ -337,9 +310,9 @@ pub fn parse_ikev2_payload_delete<'a>(
 
 fn parse_ts_addr<'a>(i: &'a [u8], t: u8) -> IResult<&'a [u8], &'a [u8]> {
     match t {
-        7 => take!(i, 4),
-        8 => take!(i, 16),
-        _ => Err(nom::Err::Error(error_position!(i, ErrorKind::Switch))),
+        7 => take(4usize)(i),
+        8 => take(16usize)(i),
+        _ => Err(nom::Err::Error(make_error(i, ErrorKind::Switch))),
     }
 }
 
@@ -389,34 +362,36 @@ pub fn parse_ikev2_payload_ts_init<'a>(
     i: &'a [u8],
     length: u16,
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
-    map!(i, call!(parse_ikev2_payload_ts, length), |x| {
-        IkeV2PayloadContent::TSi(x)
-    })
+    map(
+        |d| parse_ikev2_payload_ts(d, length),
+        IkeV2PayloadContent::TSi,
+    )(i)
 }
 
 pub fn parse_ikev2_payload_ts_resp<'a>(
     i: &'a [u8],
     length: u16,
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
-    map!(i, call!(parse_ikev2_payload_ts, length), |x| {
-        IkeV2PayloadContent::TSr(x)
-    })
+    map(
+        |d| parse_ikev2_payload_ts(d, length),
+        IkeV2PayloadContent::TSr,
+    )(i)
 }
 
 pub fn parse_ikev2_payload_encrypted<'a>(
     i: &'a [u8],
     length: u16,
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
-    map!(i, take!(length), |d| {
+    map(take(length), |d| {
         IkeV2PayloadContent::Encrypted(EncryptedPayload(d))
-    })
+    })(i)
 }
 
 pub fn parse_ikev2_payload_unknown<'a>(
     i: &'a [u8],
     length: u16,
 ) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
-    map!(i, take!(length), |d| { IkeV2PayloadContent::Unknown(d) })
+    map(take(length), IkeV2PayloadContent::Unknown)(i)
 }
 
 #[rustfmt::skip]
@@ -445,7 +420,7 @@ pub fn parse_ikev2_payload_with_type(
         _ => parse_ikev2_payload_unknown,
         // _ => panic!("unknown type {}",next_payload_type),
     };
-    flat_map!(i,take!(length),call!(f,length))
+    map_parser(take(length),move |d| f(d, length))(i)
 }
 
 fn parse_ikev2_payload_list_fold<'a>(
@@ -475,9 +450,7 @@ fn parse_ikev2_payload_list_fold<'a>(
             v.push(payload);
             Ok(v)
         }
-        Err(nom::Err::Error(e)) | Err(nom::Err::Failure(e)) => {
-            Err(IPsecError::NomError(e.code))
-        }
+        Err(nom::Err::Error(e)) | Err(nom::Err::Failure(e)) => Err(IPsecError::NomError(e.code)),
         Err(nom::Err::Incomplete(_)) => Err(IPsecError::NomError(ErrorKind::Complete)),
     }
 }
@@ -504,7 +477,7 @@ pub fn parse_ikev2_payload_list<'a>(
             break;
         }
 
-        let (rem, p) = complete!(i, parse_ikev2_payload_generic)?;
+        let (rem, p) = complete(parse_ikev2_payload_generic)(i)?;
 
         acc = parse_ikev2_payload_list_fold(acc, p);
 
