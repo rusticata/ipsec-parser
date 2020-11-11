@@ -8,7 +8,6 @@ publish = false
 cargo-fuzz = true
 
 [dependencies]
-nom = "4.0"
 
 [dependencies.ipsec-parser]
 path = ".."
