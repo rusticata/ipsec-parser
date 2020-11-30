@@ -67,6 +67,7 @@ fn test_ikev2_init_resp() {
 ### 0.6.0
 
 - Upgrade to nom 6
+- Convert all macro-based parsers to functions
 
 ### 0.5.0
 
