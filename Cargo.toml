@@ -22,7 +22,7 @@ include = [
 ]
 
 [dependencies]
-nom = "6.0"
+nom = "7.0"
 rusticata-macros = "3.0"
 
 [badges]
