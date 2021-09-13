@@ -64,6 +64,11 @@ fn test_ikev2_init_resp() {
 
 ## Changelog
 
+### 0.7.0
+
+- Upgrade to nom 7
+- Set MSRV to 1.46
+
 ### 0.6.0
 
 - Upgrade to nom 6
