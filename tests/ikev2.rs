@@ -42,11 +42,11 @@ static IKEV2_MSG: &[u8] = &[
             msg_id: 0,
             length: 300,
         };
-        let (_, res) = parse_ikev2_header(&bytes).expect("failed to parse header");
+        let (_, res) = parse_ikev2_header(bytes).expect("failed to parse header");
         // println!("{:?}",res);
         assert_eq!(res, expected);
 
-        let (_, hdr) = parse_ikev2_payload_generic(&ike_sa).expect("failed to parse payload");
+        let (_, hdr) = parse_ikev2_payload_generic(ike_sa).expect("failed to parse payload");
         // println!("{:?}",res_sa);
         let (rem, sa) = parse_ikev2_payload_sa(hdr.payload, 0).unwrap();
         assert_eq!(rem.len(), 0);
@@ -84,7 +84,7 @@ static IKEV2_MSG: &[u8] = &[
             msg_id: 0,
             length: 256,
         };
-        let (rem, (hdr, res_list)) = parse_ikev2_message(&bytes).expect("failed to parse header");
+        let (rem, (hdr, res_list)) = parse_ikev2_message(bytes).expect("failed to parse header");
         let list = res_list.expect("failed to parse payload");
         assert_eq!(rem.len(), 0);
         assert_eq!(hdr, expected_header);

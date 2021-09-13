@@ -115,20 +115,14 @@ pub fn parse_ikev2_proposal(i: &[u8]) -> IResult<&[u8], IkeV2Proposal> {
     Ok((i, proposal))
 }
 
-pub fn parse_ikev2_payload_sa<'a>(
-    i: &'a [u8],
-    _length: u16,
-) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+pub fn parse_ikev2_payload_sa(i: &[u8], _length: u16) -> IResult<&[u8], IkeV2PayloadContent> {
     map(
         many1(complete(parse_ikev2_proposal)),
         IkeV2PayloadContent::SA,
     )(i)
 }
 
-pub fn parse_ikev2_payload_kex<'a>(
-    i: &'a [u8],
-    length: u16,
-) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+pub fn parse_ikev2_payload_kex(i: &[u8], length: u16) -> IResult<&[u8], IkeV2PayloadContent> {
     if length < 4 {
         return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
@@ -143,10 +137,10 @@ pub fn parse_ikev2_payload_kex<'a>(
     Ok((i, IkeV2PayloadContent::KE(payload)))
 }
 
-pub fn parse_ikev2_payload_ident_init<'a>(
-    i: &'a [u8],
+pub fn parse_ikev2_payload_ident_init(
+    i: &[u8],
     length: u16,
-) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+) -> IResult<&[u8], IkeV2PayloadContent> {
     if length < 4 {
         return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
@@ -163,10 +157,10 @@ pub fn parse_ikev2_payload_ident_init<'a>(
     Ok((i, IkeV2PayloadContent::IDi(payload)))
 }
 
-pub fn parse_ikev2_payload_ident_resp<'a>(
-    i: &'a [u8],
+pub fn parse_ikev2_payload_ident_resp(
+    i: &[u8],
     length: u16,
-) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+) -> IResult<&[u8], IkeV2PayloadContent> {
     if length < 4 {
         return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
@@ -183,10 +177,10 @@ pub fn parse_ikev2_payload_ident_resp<'a>(
     Ok((i, IkeV2PayloadContent::IDr(payload)))
 }
 
-pub fn parse_ikev2_payload_certificate<'a>(
-    i: &'a [u8],
+pub fn parse_ikev2_payload_certificate(
+    i: &[u8],
     length: u16,
-) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+) -> IResult<&[u8], IkeV2PayloadContent> {
     if length < 1 {
         return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
@@ -199,10 +193,10 @@ pub fn parse_ikev2_payload_certificate<'a>(
     Ok((i, IkeV2PayloadContent::Certificate(payload)))
 }
 
-pub fn parse_ikev2_payload_certificate_request<'a>(
-    i: &'a [u8],
+pub fn parse_ikev2_payload_certificate_request(
+    i: &[u8],
     length: u16,
-) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+) -> IResult<&[u8], IkeV2PayloadContent> {
     if length < 1 {
         return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
@@ -215,10 +209,10 @@ pub fn parse_ikev2_payload_certificate_request<'a>(
     Ok((i, IkeV2PayloadContent::CertificateRequest(payload)))
 }
 
-pub fn parse_ikev2_payload_authentication<'a>(
-    i: &'a [u8],
+pub fn parse_ikev2_payload_authentication(
+    i: &[u8],
     length: u16,
-) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+) -> IResult<&[u8], IkeV2PayloadContent> {
     if length < 4 {
         return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
@@ -231,18 +225,12 @@ pub fn parse_ikev2_payload_authentication<'a>(
     Ok((i, IkeV2PayloadContent::Authentication(payload)))
 }
 
-pub fn parse_ikev2_payload_nonce<'a>(
-    i: &'a [u8],
-    length: u16,
-) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+pub fn parse_ikev2_payload_nonce(i: &[u8], length: u16) -> IResult<&[u8], IkeV2PayloadContent> {
     let (i, nonce_data) = take(length)(i)?;
     Ok((i, IkeV2PayloadContent::Nonce(NoncePayload { nonce_data })))
 }
 
-pub fn parse_ikev2_payload_notify<'a>(
-    i: &'a [u8],
-    length: u16,
-) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+pub fn parse_ikev2_payload_notify(i: &[u8], length: u16) -> IResult<&[u8], IkeV2PayloadContent> {
     let (i, protocol_id) = map(be_u8, ProtocolID)(i)?;
     let (i, spi_size) = be_u8(i)?;
     let (i, notify_type) = map(be_u16, NotifyType)(i)?;
@@ -263,10 +251,7 @@ pub fn parse_ikev2_payload_notify<'a>(
     Ok((i, IkeV2PayloadContent::Notify(payload)))
 }
 
-pub fn parse_ikev2_payload_vendor_id<'a>(
-    i: &'a [u8],
-    length: u16,
-) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+pub fn parse_ikev2_payload_vendor_id(i: &[u8], length: u16) -> IResult<&[u8], IkeV2PayloadContent> {
     if length < 8 {
         return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
@@ -277,10 +262,7 @@ pub fn parse_ikev2_payload_vendor_id<'a>(
     ))
 }
 
-pub fn parse_ikev2_payload_delete<'a>(
-    i: &'a [u8],
-    length: u16,
-) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+pub fn parse_ikev2_payload_delete(i: &[u8], length: u16) -> IResult<&[u8], IkeV2PayloadContent> {
     if length < 8 {
         return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
@@ -297,7 +279,7 @@ pub fn parse_ikev2_payload_delete<'a>(
     Ok((i, IkeV2PayloadContent::Delete(payload)))
 }
 
-fn parse_ts_addr<'a>(i: &'a [u8], t: TSType) -> IResult<&'a [u8], &'a [u8]> {
+fn parse_ts_addr(i: &[u8], t: TSType) -> IResult<&[u8], &[u8]> {
     match t {
         TSType::IPv4AddrRange => take(4usize)(i),
         TSType::IPv6AddrRange => take(16usize)(i),
@@ -305,7 +287,7 @@ fn parse_ts_addr<'a>(i: &'a [u8], t: TSType) -> IResult<&'a [u8], &'a [u8]> {
     }
 }
 
-fn parse_ikev2_ts<'a>(i: &'a [u8]) -> IResult<&'a [u8], TrafficSelector<'a>> {
+fn parse_ikev2_ts(i: &[u8]) -> IResult<&[u8], TrafficSelector> {
     let (i, ts_type) = map(be_u8, TSType)(i)?;
     let (i, ip_proto_id) = be_u8(i)?;
     let (i, sel_length) = be_u16(i)?;
@@ -325,10 +307,7 @@ fn parse_ikev2_ts<'a>(i: &'a [u8]) -> IResult<&'a [u8], TrafficSelector<'a>> {
     Ok((i, ts))
 }
 
-pub fn parse_ikev2_payload_ts<'a>(
-    i: &'a [u8],
-    length: u16,
-) -> IResult<&'a [u8], TrafficSelectorPayload<'a>> {
+pub fn parse_ikev2_payload_ts(i: &[u8], length: u16) -> IResult<&[u8], TrafficSelectorPayload> {
     if length < 4 {
         return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
@@ -343,39 +322,27 @@ pub fn parse_ikev2_payload_ts<'a>(
     Ok((i, payload))
 }
 
-pub fn parse_ikev2_payload_ts_init<'a>(
-    i: &'a [u8],
-    length: u16,
-) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+pub fn parse_ikev2_payload_ts_init(i: &[u8], length: u16) -> IResult<&[u8], IkeV2PayloadContent> {
     map(
         |d| parse_ikev2_payload_ts(d, length),
         IkeV2PayloadContent::TSi,
     )(i)
 }
 
-pub fn parse_ikev2_payload_ts_resp<'a>(
-    i: &'a [u8],
-    length: u16,
-) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+pub fn parse_ikev2_payload_ts_resp(i: &[u8], length: u16) -> IResult<&[u8], IkeV2PayloadContent> {
     map(
         |d| parse_ikev2_payload_ts(d, length),
         IkeV2PayloadContent::TSr,
     )(i)
 }
 
-pub fn parse_ikev2_payload_encrypted<'a>(
-    i: &'a [u8],
-    length: u16,
-) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+pub fn parse_ikev2_payload_encrypted(i: &[u8], length: u16) -> IResult<&[u8], IkeV2PayloadContent> {
     map(take(length), |d| {
         IkeV2PayloadContent::Encrypted(EncryptedPayload(d))
     })(i)
 }
 
-pub fn parse_ikev2_payload_unknown<'a>(
-    i: &'a [u8],
-    length: u16,
-) -> IResult<&'a [u8], IkeV2PayloadContent<'a>> {
+pub fn parse_ikev2_payload_unknown(i: &[u8], length: u16) -> IResult<&[u8], IkeV2PayloadContent> {
     map(take(length), IkeV2PayloadContent::Unknown)(i)
 }
 
@@ -440,10 +407,10 @@ fn parse_ikev2_payload_list_fold<'a>(
     }
 }
 
-pub fn parse_ikev2_payload_list<'a>(
-    i: &'a [u8],
+pub fn parse_ikev2_payload_list(
+    i: &[u8],
     initial_type: IkePayloadType,
-) -> IResult<&'a [u8], Result<Vec<IkeV2Payload<'a>>, IPsecError>> {
+) -> IResult<&[u8], Result<Vec<IkeV2Payload>, IPsecError>> {
     // XXX fold manually, because fold_many1 requires accumulator to have Clone, and we don't want
     // XXX to implement that for IkeV2Payload
     let mut acc = Ok(vec![IkeV2Payload {
@@ -536,7 +503,7 @@ static IKEV2_INIT_REQ: &[u8] = &[
                 length: 328,
             },
         ));
-        let res = parse_ikev2_header(&bytes);
+        let res = parse_ikev2_header(bytes);
         assert_eq!(res, expected);
     }
 
@@ -545,7 +512,7 @@ static IKEV2_INIT_REQ: &[u8] = &[
     #[test]
     fn test_ikev2_init_resp() {
         let bytes = IKEV2_INIT_RESP;
-        let (rem, ref hdr) = parse_ikev2_header(&bytes).expect("parsing header failed");
+        let (rem, ref hdr) = parse_ikev2_header(bytes).expect("parsing header failed");
         let (rem2, res_p) =
             parse_ikev2_payload_list(rem, hdr.next_payload).expect("parsing payload failed");
         assert!(rem2.is_empty());
@@ -575,7 +542,7 @@ static IKEV2_PAYLOAD_SA: &[u8] = &[
             },
             payload: &bytes[4..],
         };
-        let (_, res) = parse_ikev2_payload_generic(&bytes).expect("Failed to parse");
+        let (_, res) = parse_ikev2_payload_generic(bytes).expect("Failed to parse");
         assert_eq!(res, expected1);
         let attrs1 = &[0x80, 0x0e, 0x00, 0x80];
         let expected2 = IkeV2PayloadContent::SA(vec![IkeV2Proposal {
@@ -627,7 +594,7 @@ static IKEV2_PAYLOAD_SA: &[u8] = &[
     fn test_ikev2_parse_payload_many() {
         // let empty = &b""[..];
         let bytes = &IKEV2_INIT_REQ[28..];
-        let res = parse_ikev2_payload_list(&bytes, IkePayloadType::SecurityAssociation);
+        let res = parse_ikev2_payload_list(bytes, IkePayloadType::SecurityAssociation);
         println!("{:?}", res);
     }
 }
