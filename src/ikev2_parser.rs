@@ -252,10 +252,10 @@ pub fn parse_ikev2_payload_notify(i: &[u8], length: u16) -> IResult<&[u8], IkeV2
 }
 
 pub fn parse_ikev2_payload_vendor_id(i: &[u8], length: u16) -> IResult<&[u8], IkeV2PayloadContent> {
-    if length < 8 {
+    if length < 1 {
         return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
-    let (i, vendor_id) = take(length - 8)(i)?;
+    let (i, vendor_id) = take(length)(i)?;
     Ok((
         i,
         IkeV2PayloadContent::VendorID(VendorIDPayload { vendor_id }),
@@ -654,6 +654,33 @@ static IKEV2_PAYLOAD_SA: &[u8] = &[
     fn test_parse_delete() {
         let (input, expected) = &DELETE_IKE_SA;
         let res = parse_ikev2_payload_list(input, IkePayloadType::Delete);
+        let (rem, payloads) = res.unwrap();
+        assert!(rem.is_empty());
+        let mut payloads = payloads.unwrap();
+        assert_eq!(payloads.len(), 2);
+        let payload = payloads.pop().unwrap();
+        assert_eq!(payload.content, *expected);
+    }
+
+    static VENDOR_ID: ([u8; 11], IkeV2PayloadContent) = {
+        (
+            [
+                // Hand crafted based on <https://datatracker.ietf.org/doc/html/rfc7296#section-3.12>
+                0x00, //Next Payload: u8
+                0x00, //C + Reserved
+                0x00, 0x0b, // Payload_length: u16
+                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+            ],
+            IkeV2PayloadContent::VendorID(VendorIDPayload {
+                vendor_id: &[0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07],
+            }),
+        )
+    };
+
+    #[test]
+    fn test_parse_vendor_id() {
+        let (input, expected) = &VENDOR_ID;
+        let res = parse_ikev2_payload_list(input, IkePayloadType::VendorID);
         let (rem, payloads) = res.unwrap();
         assert!(rem.is_empty());
         let mut payloads = payloads.unwrap();
