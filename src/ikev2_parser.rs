@@ -236,10 +236,10 @@ pub fn parse_ikev2_payload_notify(i: &[u8], length: u16) -> IResult<&[u8], IkeV2
     let (i, notify_type) = map(be_u16, NotifyType)(i)?;
     let (i, spi) = cond(spi_size > 0, take(spi_size))(i)?;
     let (i, notify_data) = cond(
-        length > 8 + spi_size as u16,
+        length > 4 + spi_size as u16,
         // we have to specify a callback here to force lazy evaluation,
         // because the function arguments are evaluated *before* the test (causing underflow)
-        |d| take(length - (8 + spi_size as u16))(d),
+        |d| take(length - (4 + spi_size as u16))(d),
     )(i)?;
     let payload = NotifyPayload {
         protocol_id,
@@ -596,5 +596,39 @@ static IKEV2_PAYLOAD_SA: &[u8] = &[
         let bytes = &IKEV2_INIT_REQ[28..];
         let res = parse_ikev2_payload_list(bytes, IkePayloadType::SecurityAssociation);
         println!("{:?}", res);
+    }
+
+    static NOTFIY_UNSUPPORTED_CRITICAL_PAYLOAD: ([u8; 9], IkeV2PayloadContent) = (
+        [
+            0x00, //Next Payload: u8
+            0x00, //C + Reserved
+            0x00, 0x09, // Payload_length: u16
+            0x00, //Protocol ID
+            0x00, //Spi Size
+            0x00, 0x01, // Notify Message Type: Unsupported Critical Payload = 1: u16
+            0xFF, //Payload data
+        ],
+        IkeV2PayloadContent::Notify(NotifyPayload {
+            protocol_id: ProtocolID(0),
+            spi_size: 0,
+            notify_type: NotifyType::UNSUPPORTED_CRITICAL_PAYLOAD,
+            spi: None,
+            notify_data: Some(&[0xFFu8]),
+        }),
+    );
+
+    #[test]
+    fn test_parse_notify() {
+        let (input, expected) = &NOTFIY_UNSUPPORTED_CRITICAL_PAYLOAD;
+        let res = parse_ikev2_payload_list(input, IkePayloadType::Notify);
+        let (rem, payloads) = res.unwrap();
+        assert!(rem.is_empty());
+        let mut payloads = payloads.unwrap();
+        assert_eq!(payloads.len(), 2);
+        if let Some(payload) = payloads.pop() {
+            assert_eq!(payload.content, *expected)
+        } else {
+            panic!("Expected Notify");
+        }
     }
 }
