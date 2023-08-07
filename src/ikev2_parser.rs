@@ -263,13 +263,13 @@ pub fn parse_ikev2_payload_vendor_id(i: &[u8], length: u16) -> IResult<&[u8], Ik
 }
 
 pub fn parse_ikev2_payload_delete(i: &[u8], length: u16) -> IResult<&[u8], IkeV2PayloadContent> {
-    if length < 8 {
+    if length < 4 {
         return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
     let (i, protocol_id) = map(be_u8, ProtocolID)(i)?;
     let (i, spi_size) = be_u8(i)?;
     let (i, num_spi) = be_u16(i)?;
-    let (i, spi) = take(length - 8)(i)?;
+    let (i, spi) = take(length - 4)(i)?;
     let payload = DeletePayload {
         protocol_id,
         spi_size,
@@ -600,6 +600,7 @@ static IKEV2_PAYLOAD_SA: &[u8] = &[
 
     static NOTFIY_UNSUPPORTED_CRITICAL_PAYLOAD: ([u8; 9], IkeV2PayloadContent) = (
         [
+            // Hand crafted based on <https://datatracker.ietf.org/doc/html/rfc7296#section-3.10>
             0x00, //Next Payload: u8
             0x00, //C + Reserved
             0x00, 0x09, // Payload_length: u16
@@ -625,10 +626,39 @@ static IKEV2_PAYLOAD_SA: &[u8] = &[
         assert!(rem.is_empty());
         let mut payloads = payloads.unwrap();
         assert_eq!(payloads.len(), 2);
-        if let Some(payload) = payloads.pop() {
-            assert_eq!(payload.content, *expected)
-        } else {
-            panic!("Expected Notify");
-        }
+        let payload = payloads.pop().unwrap();
+        assert_eq!(payload.content, *expected);
+    }
+
+    static DELETE_IKE_SA: ([u8; 8], IkeV2PayloadContent) = {
+        (
+            [
+                // Hand crafted based on <https://datatracker.ietf.org/doc/html/rfc7296#section-3.11>
+                0x00, //Next Payload: u8
+                0x00, //C + Reserved
+                0x00, 0x08, // Payload_length: u16
+                0x01, //Protocol ID
+                0x00, //Spi Size
+                0x00, 0x00, //Number of SPIs: u16
+            ],
+            IkeV2PayloadContent::Delete(DeletePayload {
+                protocol_id: ProtocolID::IKE,
+                spi_size: 0,
+                num_spi: 0,
+                spi: &[],
+            }),
+        )
+    };
+
+    #[test]
+    fn test_parse_delete() {
+        let (input, expected) = &DELETE_IKE_SA;
+        let res = parse_ikev2_payload_list(input, IkePayloadType::Delete);
+        let (rem, payloads) = res.unwrap();
+        assert!(rem.is_empty());
+        let mut payloads = payloads.unwrap();
+        assert_eq!(payloads.len(), 2);
+        let payload = payloads.pop().unwrap();
+        assert_eq!(payload.content, *expected);
     }
 }
