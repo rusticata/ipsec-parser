@@ -598,8 +598,8 @@ static IKEV2_PAYLOAD_SA: &[u8] = &[
         println!("{:?}", res);
     }
 
-    static NOTFIY_UNSUPPORTED_CRITICAL_PAYLOAD: ([u8; 9], IkeV2PayloadContent) = (
-        [
+    static NOTFIY_UNSUPPORTED_CRITICAL_PAYLOAD: (&[u8], &IkeV2PayloadContent) = (
+        &[
             // Hand crafted based on <https://datatracker.ietf.org/doc/html/rfc7296#section-3.10>
             0x00, //Next Payload: u8
             0x00, //C + Reserved
@@ -609,7 +609,7 @@ static IKEV2_PAYLOAD_SA: &[u8] = &[
             0x00, 0x01, // Notify Message Type: Unsupported Critical Payload = 1: u16
             0xFF, //Payload data
         ],
-        IkeV2PayloadContent::Notify(NotifyPayload {
+        &IkeV2PayloadContent::Notify(NotifyPayload {
             protocol_id: ProtocolID(0),
             spi_size: 0,
             notify_type: NotifyType::UNSUPPORTED_CRITICAL_PAYLOAD,
@@ -620,7 +620,7 @@ static IKEV2_PAYLOAD_SA: &[u8] = &[
 
     #[test]
     fn test_parse_notify() {
-        let (input, expected) = &NOTFIY_UNSUPPORTED_CRITICAL_PAYLOAD;
+        let (input, expected) = NOTFIY_UNSUPPORTED_CRITICAL_PAYLOAD;
         let res = parse_ikev2_payload_list(input, IkePayloadType::Notify);
         let (rem, payloads) = res.unwrap();
         assert!(rem.is_empty());
@@ -630,9 +630,9 @@ static IKEV2_PAYLOAD_SA: &[u8] = &[
         assert_eq!(payload.content, *expected);
     }
 
-    static DELETE_IKE_SA: ([u8; 8], IkeV2PayloadContent) = {
+    static DELETE_IKE_SA: (&[u8], &IkeV2PayloadContent) = {
         (
-            [
+            &[
                 // Hand crafted based on <https://datatracker.ietf.org/doc/html/rfc7296#section-3.11>
                 0x00, //Next Payload: u8
                 0x00, //C + Reserved
@@ -641,7 +641,7 @@ static IKEV2_PAYLOAD_SA: &[u8] = &[
                 0x00, //Spi Size
                 0x00, 0x00, //Number of SPIs: u16
             ],
-            IkeV2PayloadContent::Delete(DeletePayload {
+            &IkeV2PayloadContent::Delete(DeletePayload {
                 protocol_id: ProtocolID::IKE,
                 spi_size: 0,
                 num_spi: 0,
@@ -652,7 +652,7 @@ static IKEV2_PAYLOAD_SA: &[u8] = &[
 
     #[test]
     fn test_parse_delete() {
-        let (input, expected) = &DELETE_IKE_SA;
+        let (input, expected) = DELETE_IKE_SA;
         let res = parse_ikev2_payload_list(input, IkePayloadType::Delete);
         let (rem, payloads) = res.unwrap();
         assert!(rem.is_empty());
@@ -662,16 +662,16 @@ static IKEV2_PAYLOAD_SA: &[u8] = &[
         assert_eq!(payload.content, *expected);
     }
 
-    static VENDOR_ID: ([u8; 11], IkeV2PayloadContent) = {
+    static VENDOR_ID: (&[u8], &IkeV2PayloadContent) = {
         (
-            [
+            &[
                 // Hand crafted based on <https://datatracker.ietf.org/doc/html/rfc7296#section-3.12>
                 0x00, //Next Payload: u8
                 0x00, //C + Reserved
                 0x00, 0x0b, // Payload_length: u16
                 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
             ],
-            IkeV2PayloadContent::VendorID(VendorIDPayload {
+            &IkeV2PayloadContent::VendorID(VendorIDPayload {
                 vendor_id: &[0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07],
             }),
         )
@@ -679,7 +679,7 @@ static IKEV2_PAYLOAD_SA: &[u8] = &[
 
     #[test]
     fn test_parse_vendor_id() {
-        let (input, expected) = &VENDOR_ID;
+        let (input, expected) = VENDOR_ID;
         let res = parse_ikev2_payload_list(input, IkePayloadType::VendorID);
         let (rem, payloads) = res.unwrap();
         assert!(rem.is_empty());
