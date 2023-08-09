@@ -422,7 +422,7 @@ pub fn parse_ikev2_payload_list(
         },
         content: IkeV2PayloadContent::Dummy,
     }]);
-    #[allow(clippy::clone_double_ref)]
+    #[allow(suspicious_double_ref_op)]
     let mut i = i;
     loop {
         if i.is_empty() {
