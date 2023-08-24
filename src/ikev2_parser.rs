@@ -217,9 +217,13 @@ pub fn parse_ikev2_payload_authentication(
         return Err(Err::Error(make_error(i, ErrorKind::Verify)));
     }
     let (i, auth_method) = map(be_u8, AuthenticationMethod)(i)?;
+    let (i, reserved1) = be_u8(i)?;
+    let (i, reserved2) = be_u16(i)?;
     let (i, auth_data) = take(length - 4)(i)?;
     let payload = AuthenticationPayload {
         auth_method,
+        reserved1,
+        reserved2,
         auth_data,
     };
     Ok((i, IkeV2PayloadContent::Authentication(payload)))

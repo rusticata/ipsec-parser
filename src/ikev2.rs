@@ -348,6 +348,8 @@ pub struct CertificateRequestPayload<'a> {
 #[derive(Debug, PartialEq)]
 pub struct AuthenticationPayload<'a> {
     pub auth_method: AuthenticationMethod,
+    pub reserved1: u8,
+    pub reserved2: u16,
     pub auth_data: &'a [u8],
 }
 
