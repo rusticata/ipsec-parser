@@ -1,10 +1,9 @@
-# ipsec-parser
-
+![Maintenance](https://img.shields.io/badge/maintenance-activly--developed-brightgreen.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE-MIT)
 [![Apache License 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE-APACHE)
 [![Build Status](https://travis-ci.org/rusticata/ipsec-parser.svg?branch=master)](https://travis-ci.org/rusticata/ipsec-parser)
 
-<!-- cargo-sync-readme start -->
+<!-- cargo-rdme start -->
 
 # IPsec parsers
 
@@ -60,7 +59,7 @@ fn test_ikev2_init_resp() {
 }
 ```
 
-<!-- cargo-sync-readme end -->
+<!-- cargo-rdme end -->
 
 ## Changelog
 
