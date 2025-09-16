@@ -287,7 +287,7 @@ fn parse_ts_addr(i: &[u8], t: TSType) -> IResult<&[u8], &[u8]> {
     match t {
         TSType::IPv4AddrRange => take(4usize)(i),
         TSType::IPv6AddrRange => take(16usize)(i),
-        _ => Err(nom::Err::Error(make_error(i, ErrorKind::Switch))),
+        _ => Err(Err::Error(make_error(i, ErrorKind::Switch))),
     }
 }
 
@@ -406,8 +406,8 @@ fn parse_ikev2_payload_list_fold<'a>(
             v.push(payload);
             Ok(v)
         }
-        Err(nom::Err::Error(e)) | Err(nom::Err::Failure(e)) => Err(IPsecError::NomError(e.code)),
-        Err(nom::Err::Incomplete(_)) => Err(IPsecError::NomError(ErrorKind::Complete)),
+        Err(Err::Error(e)) | Err(Err::Failure(e)) => Err(IPsecError::NomError(e.code)),
+        Err(Err::Incomplete(_)) => Err(IPsecError::NomError(ErrorKind::Complete)),
     }
 }
 
