@@ -31,7 +31,7 @@ pub enum ESPData<'a> {
 /// Any other value indicates an ESP header.
 ///
 /// *Note: input is entirely consumed*
-pub fn parse_esp_encapsulated(i: &[u8]) -> IResult<&[u8], ESPData> {
+pub fn parse_esp_encapsulated(i: &[u8]) -> IResult<&[u8], ESPData<'_>> {
     if be_u32(i)?.1 == 0 {
         parse_ikev2_header(i).map(|x| (x.0, ESPData::IKE(x.1)))
     } else {
@@ -48,7 +48,7 @@ pub fn parse_esp_encapsulated(i: &[u8]) -> IResult<&[u8], ESPData> {
 /// - the payload data (which can be encrypted)
 ///
 /// *Note: input is entirely consumed*
-pub fn parse_esp_header(i: &[u8]) -> IResult<&[u8], ESPHeader> {
+pub fn parse_esp_header(i: &[u8]) -> IResult<&[u8], ESPHeader<'_>> {
     let (i, spi_index) = take(4usize)(i)?;
     let (i, seq) = be_u32(i)?;
     let (i, data) = rest(i)?;
